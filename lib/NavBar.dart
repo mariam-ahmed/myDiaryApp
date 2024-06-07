@@ -1,0 +1,80 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:mobile_app/reusable_widgets/reusable_widget.dart';
+import 'package:mobile_app/screens/entries_screen.dart';
+import 'package:mobile_app/screens/profile_screen.dart';
+import 'package:mobile_app/screens/settings_screen.dart';
+import 'package:mobile_app/screens/signin_screen.dart';
+import 'package:mobile_app/utils/color_utils.dart';
+
+class NavBar extends StatelessWidget {
+  String email = "";
+
+  NavBar(String email, {super.key}) {
+    this.email = email;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+        child: ListView(children: [
+      UserAccountsDrawerHeader(
+          accountName: const Text("Ali"),
+          accountEmail: Text(email),
+          currentAccountPicture: CircleAvatar(
+            child: ClipOval(
+              child: logoWidget("assets/images/user.png")
+            )
+          ),
+        decoration: BoxDecoration(
+          color: hexStringToColor("#7ED6DF")
+        ),
+      ),
+          ListTile(
+            leading: Icon(Icons.sticky_note_2),
+            title: Text("Entries"),
+            onTap: () {
+              print("Entries");
+              FirebaseAuth.instance.signOut().then((value) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => EntriesScreen()));
+              });
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.person),
+            title: Text("Profile"),
+            onTap: () {
+              print("Profile");
+              FirebaseAuth.instance.signOut().then((value) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen()));
+              });
+            },
+          ),
+          Divider(),
+          ListTile(
+            leading: Icon(Icons.settings),
+            title: Text("Settings"),
+            onTap: () {
+              print("Settings");
+              FirebaseAuth.instance.signOut().then((value) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => SettingsScreen()));
+              });
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.logout),
+            title: Text("Logout"),
+            onTap: () {
+              print("Logged Out");
+              FirebaseAuth.instance.signOut().then((value) {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => SignInScreen()));
+              });
+            },
+          )
+    ]));
+  }
+}
