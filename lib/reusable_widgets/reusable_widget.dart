@@ -4,6 +4,10 @@ Image logoWidget(String imageName) {
   return Image.asset(imageName, fit: BoxFit.fitWidth, width: 240, height: 240);
 }
 
+Image bgImage(String imageName) {
+  return Image.asset(imageName, fit: BoxFit.cover, width: double.infinity, height: 280);
+}
+
 TextField reusableTextField(String text, IconData icon, bool isPasswordType,
     TextEditingController controller) {
   return TextField(

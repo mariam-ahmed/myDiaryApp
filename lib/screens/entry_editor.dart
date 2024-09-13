@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/reusable_methods/mood_calculations.dart';
 
 class EntryEditorScreen extends StatefulWidget {
   const EntryEditorScreen({super.key});
@@ -9,10 +11,11 @@ class EntryEditorScreen extends StatefulWidget {
 }
 
 class _EntryEditorScreenState extends State<EntryEditorScreen> {
+  String? id = FirebaseAuth.instance.currentUser?.uid;
   TextEditingController _titleController = TextEditingController();
   TextEditingController _mainController = TextEditingController();
-  DateTime date = DateTime.now();
   Timestamp date2 = Timestamp.now();
+  double mood = 5;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +39,21 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
               ),
             ),
             const SizedBox(height: 8.0,),
-            Text(date2.toString()),
+            Text(date2.toDate().toString()),
+            const SizedBox(height: 8.0,),
+            const Text("How are you feeling today?"),
+            const SizedBox(height: 4.0,),
+            Slider(
+              value: mood,
+              max: 10,
+              divisions: 10,
+              activeColor: Colors.teal,
+              onChanged: (double value){
+                setState(() {
+                  mood = value;
+                });
+              },
+            ),
             const SizedBox(height: 28.0,),
             TextField(
                 controller: _mainController,
@@ -54,11 +71,13 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
           FirebaseFirestore.instance.collection("notes").add({
             "entry_title":_titleController.text,
             "entry_date": date2,
-            "entry_content": _mainController.text
+            "entry_mood": mood,
+            "entry_content": _mainController.text,
+            "user_id": id
           }).then((value) {
-            print(value.id);
+            updateMood(id!,mood);
             Navigator.pop(context);
-          }).catchError((error) => print("Failed to Save Note"));
+          }).catchError((error) => print("Failed to Save Note $error"));
         },
         child: const Icon(Icons.save),
       ),

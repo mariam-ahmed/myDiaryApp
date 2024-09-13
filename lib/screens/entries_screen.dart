@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/reusable_widgets/entry_card.dart';
 import 'package:mobile_app/screens/entry_editor.dart';
 import 'package:mobile_app/utils/color_utils.dart';
 
+import '../reusable_methods/firebase_methods.dart';
 import 'entry_reader.dart';
 
 class EntriesScreen extends StatefulWidget {
@@ -38,7 +40,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream:
-                    FirebaseFirestore.instance.collection("notes").snapshots(),
+                    FirebaseFirestore.instance.collection("notes").where("user_id", isEqualTo: getUser()).snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -80,4 +82,6 @@ class _EntriesScreenState extends State<EntriesScreen> {
       ),
     );
   }
+
+
 }

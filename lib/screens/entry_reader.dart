@@ -30,6 +30,10 @@ class _NoteReaderScreenState extends State<EntryReaderScreen> {
           Text(
               widget.doc["entry_date"].toDate().toString()
           ),
+          const SizedBox(height: 4.0,),
+          Text(
+              "Mood: ${widget.doc["entry_mood"]}"
+          ),
           const SizedBox(height: 18.0,),
           Text(
               widget.doc["entry_content"]

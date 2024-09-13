@@ -8,10 +8,10 @@ import 'package:mobile_app/screens/signin_screen.dart';
 import 'package:mobile_app/utils/color_utils.dart';
 
 class NavBar extends StatelessWidget {
-  String email = "";
+  String name = "";
 
-  NavBar(String email, {super.key}) {
-    this.email = email;
+  NavBar(String name, {super.key}) {
+    this.name = name;
   }
 
   @override
@@ -19,8 +19,7 @@ class NavBar extends StatelessWidget {
     return Drawer(
         child: ListView(children: [
       UserAccountsDrawerHeader(
-          accountName: const Text("Ali"),
-          accountEmail: Text(email),
+          accountName: Text(name),
           currentAccountPicture: CircleAvatar(
             child: ClipOval(
               child: logoWidget("assets/images/user.png")
@@ -28,7 +27,7 @@ class NavBar extends StatelessWidget {
           ),
         decoration: BoxDecoration(
           color: hexStringToColor("#7ED6DF")
-        ),
+        ), accountEmail: null,
       ),
           ListTile(
             leading: Icon(Icons.sticky_note_2),
@@ -48,7 +47,7 @@ class NavBar extends StatelessWidget {
               print("Profile");
               FirebaseAuth.instance.signOut().then((value) {
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()));
+                    MaterialPageRoute(builder: (context) => ProfileScreen(name)));
               });
             },
           ),
@@ -77,4 +76,5 @@ class NavBar extends StatelessWidget {
           )
     ]));
   }
+
 }

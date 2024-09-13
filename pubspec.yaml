@@ -51,7 +51,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^3.0.0
   flutter_launcher_icons: "^0.13.1"
-
+  js: ^0.6.2
 
 flutter_launcher_icons:
   image_path: "assets/images/logo.png"
