@@ -34,6 +34,10 @@ class _NoteReaderScreenState extends State<EntryReaderScreen> {
           Text(
               "Mood: ${widget.doc["entry_mood"]}"
           ),
+          const SizedBox(height: 4.0,),
+          Text(
+              "Intensity: ${widget.doc["entry_mood_intensity"]}"
+          ),
           const SizedBox(height: 18.0,),
           Text(
               widget.doc["entry_content"]

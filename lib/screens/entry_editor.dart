@@ -4,18 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/reusable_methods/mood_calculations.dart';
 
 class EntryEditorScreen extends StatefulWidget {
-  const EntryEditorScreen({super.key});
+
+  String uid = "";
+  EntryEditorScreen(this.uid, {super.key});
 
   @override
-  State<EntryEditorScreen> createState() => _EntryEditorScreenState();
+  State<EntryEditorScreen> createState() => _EntryEditorScreenState(uid);
 }
 
 class _EntryEditorScreenState extends State<EntryEditorScreen> {
-  String? id = FirebaseAuth.instance.currentUser?.uid;
   TextEditingController _titleController = TextEditingController();
   TextEditingController _mainController = TextEditingController();
   Timestamp date2 = Timestamp.now();
-  double mood = 5;
+  double mood = 3;
+  double intensity = 3;
+  String uid = "";
+
+  _EntryEditorScreenState(this.uid);
 
   @override
   Widget build(BuildContext context) {
@@ -45,12 +50,25 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
             const SizedBox(height: 4.0,),
             Slider(
               value: mood,
-              max: 10,
-              divisions: 10,
+              max: 5,
+              divisions: 5,
               activeColor: Colors.teal,
               onChanged: (double value){
                 setState(() {
                   mood = value;
+                });
+              },
+            ),
+            const SizedBox(height: 8.0,),
+            const Text("How strong are you feeling that?"),
+            Slider(
+              value: intensity,
+              max: 5,
+              divisions: 5,
+              activeColor: Colors.teal,
+              onChanged: (double value){
+                setState(() {
+                  intensity = value;
                 });
               },
             ),
@@ -72,10 +90,11 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
             "entry_title":_titleController.text,
             "entry_date": date2,
             "entry_mood": mood,
+            "entry_mood_intensity": intensity,
             "entry_content": _mainController.text,
-            "user_id": id
+            "user_id": uid
           }).then((value) {
-            updateMood(id!,mood);
+            updateMood(uid,mood);
             Navigator.pop(context);
           }).catchError((error) => print("Failed to Save Note $error"));
         },

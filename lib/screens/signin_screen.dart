@@ -56,7 +56,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     .then((value) {
                   print("Login Successful");
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => HomeScreen(_emailTextController.text)));
+                      MaterialPageRoute(builder: (context) => HomeScreen(FirebaseAuth.instance.currentUser!.uid)));
                 }).onError((error, stackTrace) {
                   print("Error ${error.toString()}");
                 });

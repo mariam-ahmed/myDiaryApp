@@ -9,10 +9,9 @@ import 'package:mobile_app/utils/color_utils.dart';
 
 class NavBar extends StatelessWidget {
   String name = "";
+  String uid = "";
 
-  NavBar(String name, {super.key}) {
-    this.name = name;
-  }
+  NavBar(this.name, this.uid, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +35,7 @@ class NavBar extends StatelessWidget {
               print("Entries");
               FirebaseAuth.instance.signOut().then((value) {
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => EntriesScreen()));
+                    MaterialPageRoute(builder: (context) => EntriesScreen(uid)));
               });
             },
           ),
@@ -47,7 +46,7 @@ class NavBar extends StatelessWidget {
               print("Profile");
               FirebaseAuth.instance.signOut().then((value) {
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen(name)));
+                    MaterialPageRoute(builder: (context) => ProfileScreen(name,uid)));
               });
             },
           ),

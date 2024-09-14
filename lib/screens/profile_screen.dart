@@ -7,24 +7,21 @@ import '../reusable_widgets/reusable_widget.dart';
 class ProfileScreen extends StatefulWidget {
 
   String name = "";
+  String uid = "";
 
-  ProfileScreen(String name, {super.key}) {
-    this.name = name;
-  }
+  ProfileScreen(this.name, this.uid, {super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState(this.name);
+  State<ProfileScreen> createState() => _ProfileScreenState(name,uid);
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
   String name = 'Loading...';
   String avg_mood = 'Loading...';
+  String uid = "";
 
-  _ProfileScreenState(String name)
-  {
-    this.name = name;
-  }
+  _ProfileScreenState(this.name, this.uid);
 
   @override
   void initState() {
@@ -50,7 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void fetchAvgMood() async{
-    String? result = await getAvgMood();
+    String? result = await getAvgMood(uid);
     setState((){
       avg_mood = result!;
     });

@@ -9,13 +9,23 @@ import '../reusable_methods/firebase_methods.dart';
 import 'entry_reader.dart';
 
 class EntriesScreen extends StatefulWidget {
-  const EntriesScreen({super.key});
+  String uid = "";
+   EntriesScreen(String uid, {super.key}){
+     this.uid = uid;
+   }
 
   @override
-  State<EntriesScreen> createState() => _EntriesScreenState();
+  State<EntriesScreen> createState() => _EntriesScreenState(this.uid);
 }
 
 class _EntriesScreenState extends State<EntriesScreen> {
+
+  String uid = "";
+  _EntriesScreenState(String uid)
+  {
+    this.uid = uid;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +50,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream:
-                    FirebaseFirestore.instance.collection("notes").where("user_id", isEqualTo: getUser()).snapshots(),
+                    FirebaseFirestore.instance.collection("notes").where("user_id", isEqualTo: uid).snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -75,7 +85,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const EntryEditorScreen()));
+                  builder: (context) => EntryEditorScreen(uid)));
         },
         label: const Text("Create Entry"),
         icon: const Icon(Icons.add),

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../reusable_methods/firebase_methods.dart';
 import '../reusable_widgets/reusable_widget.dart';
 import '../utils/color_utils.dart';
 import 'home_screen.dart';
@@ -17,7 +18,9 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController _passwordTextController = TextEditingController();
   TextEditingController _emailTextController = TextEditingController();
-  TextEditingController _usernameTextController = TextEditingController();
+  TextEditingController _firstNameTextController = TextEditingController();
+  TextEditingController _lastNameTextController = TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +60,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(
                   height: 20,
                 ),
-                reusableTextField("Enter Username", Icons.person_outlined,
-                    false, _usernameTextController),
+                reusableTextField("Enter First Name", Icons.person_outlined,
+                    false, _firstNameTextController),
                 const SizedBox(
                   height: 20,
                 ),
-                reusableTextField("Enter Email", Icons.person_outlined, false,
+                reusableTextField("Enter Last Name", Icons.person_outlined,
+                    false, _lastNameTextController),
+                const SizedBox(
+                  height: 20,
+                ),
+                reusableTextField("Enter Email", Icons.email, false,
                     _emailTextController),
                 const SizedBox(
                   height: 20,
@@ -77,7 +85,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       email: _emailTextController.text,
                       password: _passwordTextController.text).then((value) {
                         print("Created New Account");
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(_emailTextController.text)));
+                        createAccount(_firstNameTextController.text, _lastNameTextController.text, FirebaseAuth.instance.currentUser!.uid);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(FirebaseAuth.instance.currentUser!.uid)));
                   }).onError((error, stackTrace) {
                     print("Error ${error.toString()}");
                   });

@@ -4,23 +4,19 @@ import 'package:mobile_app/NavBar.dart';
 import '../reusable_methods/firebase_methods.dart';
 
 class HomeScreen extends StatefulWidget {
-  String email = "";
+  String uid = "";
 
-  HomeScreen(String email, {super.key}) {
-    this.email = email;
-  }
+  HomeScreen(this.uid, {super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState(this.email);
+  State<HomeScreen> createState() => _HomeScreenState(this.uid);
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String email = "";
+  String uid = "";
   String name = "";
 
-  _HomeScreenState(String email) {
-    this.email = email;
-  }
+  _HomeScreenState(this.uid);
 
   @override
   void initState() {
@@ -31,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: NavBar(name),
+      drawer: NavBar(name, uid),
       appBar: AppBar(
         title: Text("Home"),
       ),
@@ -40,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void fetchName() async {
-    String? result = await getName();
+    String? result = await getName(uid);
     setState(() {
       name = result!;
     });
