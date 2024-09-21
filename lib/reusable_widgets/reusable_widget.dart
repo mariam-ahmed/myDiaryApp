@@ -8,28 +8,24 @@ Image bgImage(String imageName) {
   return Image.asset(imageName, fit: BoxFit.cover, width: double.infinity, height: 280);
 }
 
-TextField reusableTextField(String text, IconData icon, bool isPasswordType,
-    TextEditingController controller) {
+Widget reusableTextField(String hintText, IconData icon, bool isPasswordType, TextEditingController controller) {
   return TextField(
     controller: controller,
     obscureText: isPasswordType,
-    enableSuggestions: !isPasswordType,
-    autocorrect: !isPasswordType,
-    cursorColor: Colors.white,
-    style: TextStyle(color: Colors.white.withOpacity(0.9)),
+    cursorColor: Colors.black87, // Cursor color
+    style: TextStyle(color: Colors.black87), // Text color
     decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.white70),
-        labelText: text,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.9)),
-        filled: true,
-        floatingLabelBehavior: FloatingLabelBehavior.never,
-        fillColor: Colors.white.withOpacity(0.3),
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30.0),
-            borderSide: const BorderSide(width: 0, style: BorderStyle.none))),
-    keyboardType: isPasswordType
-        ? TextInputType.visiblePassword
-        : TextInputType.emailAddress,
+      prefixIcon: Icon(icon, color: Colors.black54),
+      hintText: hintText,
+      hintStyle: TextStyle(color: Colors.black38), // Hint text color
+      filled: true,
+      fillColor: Colors.white, // Background color of TextField
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none, // Remove the border line
+      ),
+      contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+    ),
   );
 }
 
@@ -65,4 +61,14 @@ Container signInSignUpButton(BuildContext context, bool isLogin,
       ),
     ),
   );
+}
+
+void showSnackBar(BuildContext context, String message) {
+  final snackBar = SnackBar(
+    content: Text(message),
+    duration: Duration(seconds: 2), // How long the snackbar is displayed
+  );
+
+  // Use ScaffoldMessenger to show the snackbar
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
 }

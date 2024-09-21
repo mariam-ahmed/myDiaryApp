@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/reusable_widgets/entry_card.dart';
+import 'package:mobile_app/reusable_widgets/reusable_widget.dart';
 import 'package:mobile_app/screens/entry_editor.dart';
 import 'package:mobile_app/utils/color_utils.dart';
 
@@ -50,7 +51,7 @@ class _EntriesScreenState extends State<EntriesScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream:
-                    FirebaseFirestore.instance.collection("notes").where("user_id", isEqualTo: uid).snapshots(),
+                    FirebaseFirestore.instance.collection("notes").where("uid", isEqualTo: uid).snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -81,11 +82,17 @@ class _EntriesScreenState extends State<EntriesScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => EntryEditorScreen(uid)));
+        onPressed: () async {
+          if(await canAddEntryToday(uid)) {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => EntryEditorScreen(uid)));
+          }
+          else
+            {
+              showSnackBar(context, "You've already created today's entry");
+            }
         },
         label: const Text("Create Entry"),
         icon: const Icon(Icons.add),
