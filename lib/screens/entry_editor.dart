@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/reusable_methods/firebase_methods.dart';
 import 'package:mobile_app/reusable_methods/mood_calculations.dart';
 import 'package:mobile_app/reusable_widgets/reusable_widget.dart';
 
@@ -23,16 +24,17 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
   final String uid;
   late List<dynamic> classification;
   String firstClassification = '';
+  bool therapistCanView = false;
 
   _EntryEditorScreenState(this.uid);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,  // Light, neutral background
+      backgroundColor: Colors.grey.shade100, // Light, neutral background
       appBar: AppBar(
         elevation: 0.0,
-        backgroundColor: Colors.teal.shade900,  // Dark teal for consistency
+        backgroundColor: Colors.teal.shade900, // Dark teal for consistency
         title: const Text(
           "Add New Entry",
           style: TextStyle(color: Colors.white),
@@ -50,7 +52,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.teal.shade900, width: 1.5),
+                    borderSide:
+                        BorderSide(color: Colors.teal.shade900, width: 1.5),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -103,6 +106,17 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
 
               const SizedBox(height: 28.0),
 
+              CheckboxListTile(
+                title: Text("Allow therapist to view?"),
+                value: therapistCanView,
+                onChanged: (value) {
+                  setState(() {
+                    therapistCanView = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 28.0),
+
               // Entry Content TextField
               TextField(
                 controller: _mainController,
@@ -112,7 +126,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.teal.shade900, width: 1.5),
+                    borderSide:
+                        BorderSide(color: Colors.teal.shade900, width: 1.5),
                   ),
                   filled: true,
                   fillColor: Colors.white,
@@ -125,22 +140,9 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          classification = await classify(_mainController.text);
-          firstClassification = classification[0];
-          FirebaseFirestore.instance.collection("notes").add({
-            "entry_title": _titleController.text,
-            "entry_date": date2,
-            "entry_mood": mood,
-            "entry_mood_intensity": intensity,
-            "entry_content": _mainController.text,
-            "entry_classification": classification,
-            "uid": uid,
-          }).then((value) {
-            updateMood(uid, mood);
-            Navigator.pop(context);
-            showSnackBar(context, "Entry Saved Successfully");
-          }).catchError((error) => {showSnackBar(context, "Failed to save entry")});
+        onPressed: () => {
+          addEntry(uid, _titleController.text, mood, intensity, therapistCanView,
+              _mainController.text, context)
         },
         child: const Icon(Icons.save),
         backgroundColor: Colors.teal.shade900,

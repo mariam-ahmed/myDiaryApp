@@ -1,10 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cryptography/cryptography.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart'; // To format the date
+import 'package:mobile_app/reusable_methods/tensorFlow_methods.dart';
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
+import '../encryption/blockchain_methods.dart';
+import '../encryption/entry_encryption.dart';
+import '../reusable_widgets/reusable_widget.dart';
+import 'mood_calculations.dart';
 
 Future<String?> getName(String uid) async {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   QuerySnapshot querySnapshot =
-  await _firestore.collection("users").where("uid", isEqualTo: uid).get();
+      await _firestore.collection("users").where("uid", isEqualTo: uid).get();
   if (querySnapshot.docs.isNotEmpty) {
     DocumentSnapshot doc = querySnapshot.docs.first;
     return (doc.get('first_name') + " " + doc.get('last_name')) as String?;
@@ -17,7 +28,7 @@ Future<String?> getAvgMood(String uid) async {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? avgMood = '';
   QuerySnapshot querySnapshot =
-  await _firestore.collection("users").where("uid", isEqualTo: uid).get();
+      await _firestore.collection("users").where("uid", isEqualTo: uid).get();
   if (querySnapshot.docs.isNotEmpty) {
     DocumentSnapshot doc = querySnapshot.docs.first;
     avgMood = doc.get('avg_mood').toString();
@@ -36,7 +47,7 @@ Future<DocumentSnapshot?> getEntryTitleByDay(
       .collection('notes')
       .where("uid", isEqualTo: uid)
       .where('entry_date',
-      isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
       .orderBy('entry_date')
       .get();
 
@@ -49,17 +60,31 @@ Future<DocumentSnapshot?> getEntryTitleByDay(
     for (var entry in weeklyEntries) {
       if (entry['day'] == dayOfWeek) {
         entry['summary'] =
-        doc['entry_title']; // Update the summary for that day
+            doc['entry_title']; // Update the summary for that day
       }
     }
   }
 }
 
-void createAccount(String fName, String lName, String uid) async {
+void createUserAccount(
+    String fName, String lName, String therapist, String pin, String uid) async {
   FirebaseFirestore.instance.collection("users").add({
     "first_name": fName,
     "last_name": lName,
     "avg_mood": 0,
+    "avg_mood_last_week": 0,
+    "role": "user",
+    "therapist": therapist,
+    "pin": int.parse(pin),
+    "uid": uid,
+  }).catchError((error) => print("Failed to Create Account $error"));
+}
+
+void createTherapistAccount(String fName, String lName, String uid) async {
+  FirebaseFirestore.instance.collection("users").add({
+    "first_name": fName,
+    "last_name": lName,
+    "role": "therapist",
     "uid": uid,
   }).catchError((error) => print("Failed to Create Account $error"));
 }
@@ -81,3 +106,165 @@ Future<bool> canAddEntryToday(String uid) async {
   }
   return true;
 }
+
+Future<bool> addEntry(String uid, String title, double mood, double intensity,
+    bool visibility, String entry, BuildContext context) async {
+  bool status = false;
+  late List<dynamic> classification;
+  String firstClassification = '';
+  final Timestamp date2 = Timestamp.now();
+  classification = await classify(entry);
+  firstClassification = classification[0];
+  final encryptionService = EncryptionService();
+
+  SecretKey? key = await encryptionService.getStoredKey();
+
+  String prevHash = await computeHash(uid);
+
+  final encryptedEntry = await EncryptionService().encryptEntry(entry, key!);
+  final encryptedClassification =
+      await encryptionService.encrypt(firstClassification);
+  final publicKey = await encryptionService.getPublicKey();
+
+  FirebaseFirestore.instance.collection("notes").add({
+    "entry_title": title,
+    "entry_date": date2,
+    "entry_mood": mood,
+    "entry_mood_intensity": intensity,
+    "entry_content": encryptedEntry,
+    "entry_classification": encryptedClassification,
+    "prev_entry_hash": prevHash,
+    "visibility": visibility,
+    "uid": uid,
+    "public_key": publicKey,
+  }).then((value) {
+    updateMood(uid, mood);
+    Navigator.pop(context);
+    showSnackBar(context, "Entry Saved Successfully");
+    status = true;
+  }).catchError((error) => {showSnackBar(context, "Failed to save entry")});
+
+  // Uint8List encrypted_data = encryptJournalEntry(entry, publicKey);
+  // print(encrypted_data);
+  return status;
+}
+
+Future<String?> getUserRole(String uid) async {
+  QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .where('uid', isEqualTo: uid)
+      .get();
+
+  if (querySnapshot.docs.isNotEmpty) {
+    return querySnapshot.docs.first["role"] as String?;
+  }
+  return null;
+}
+
+Future<List<String>> fetchTherapists() async {
+  try {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'therapist')
+        .get();
+
+    List<String> therapistNames = snapshot.docs.map((doc) {
+      return "${doc['first_name']} ${doc['last_name']}"; // Concatenates first and last name
+    }).toList();
+
+    return therapistNames;
+  } catch (e) {
+    print("Error fetching therapists: $e");
+    return [];
+  }
+}
+
+Future<List<Map<String, dynamic>>> fetchUsersForTherapist(
+    String therapistName) async {
+  try {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('therapist', isEqualTo: therapistName) // Match therapist name
+        .get();
+
+    List<Map<String, dynamic>> userList = snapshot.docs.map((doc) {
+      return {
+        'uid': doc['uid'],
+        'firstName': doc['first_name'],
+        'lastName': doc['last_name'],
+      };
+    }).toList();
+
+    return userList;
+  } catch (e) {
+    print("Error fetching users for therapist: $e");
+    return [];
+  }
+}
+
+// Future<int> verifyPin()
+// {
+//
+// }
+
+
+Future<Map<String, List<double>>> getWeeklyMoodAnalyticsForTherapist(String therapistUid) async {
+  final firestore = FirebaseFirestore.instance;
+  final now = DateTime.now();
+  final startOfThisWeek = now.subtract(Duration(days: now.weekday - 1)); // Monday
+  final startOfLastWeek = startOfThisWeek.subtract(Duration(days: 7));
+
+  // Initialize mood sums and counts
+  List<double> currentWeekSum = List.filled(7, 0);
+  List<int> currentWeekCount = List.filled(7, 0);
+  List<double> lastWeekSum = List.filled(7, 0);
+  List<int> lastWeekCount = List.filled(7, 0);
+
+  // 1. Get all patients under this therapist
+  final patientsSnapshot = await firestore
+      .collection('users')
+      .where('therapistId', isEqualTo: therapistUid)
+      .get();
+
+  final patientUids = patientsSnapshot.docs.map((doc) => doc.id).toList();
+
+  // 2. Get all mood entries for these patients within the last 14 days
+  final fourteenDaysAgo = now.subtract(Duration(days: 14));
+  final entriesSnapshot = await firestore
+      .collection('journal_entries')
+      .where('uid', whereIn: patientUids)
+      .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(fourteenDaysAgo))
+      .get();
+
+  for (var doc in entriesSnapshot.docs) {
+    final data = doc.data();
+    final mood = data['mood']?.toDouble() ?? 0;
+    final uid = data['uid'];
+    final timestamp = (data['timestamp'] as Timestamp).toDate();
+
+    final dayIndex = timestamp.weekday - 1; // 0 (Mon) to 6 (Sun)
+
+    if (timestamp.isAfter(startOfThisWeek)) {
+      currentWeekSum[dayIndex] += mood;
+      currentWeekCount[dayIndex]++;
+    } else if (timestamp.isAfter(startOfLastWeek) && timestamp.isBefore(startOfThisWeek)) {
+      lastWeekSum[dayIndex] += mood;
+      lastWeekCount[dayIndex]++;
+    }
+  }
+
+  List<double> currentWeekAvg = List.generate(7, (i) {
+    return currentWeekCount[i] == 0 ? 0 : currentWeekSum[i] / currentWeekCount[i];
+  });
+
+  List<double> lastWeekAvg = List.generate(7, (i) {
+    return lastWeekCount[i] == 0 ? 0 : lastWeekSum[i] / lastWeekCount[i];
+  });
+
+  return {
+    'currentWeek': currentWeekAvg,
+    'lastWeek': lastWeekAvg,
+  };
+}
+
+

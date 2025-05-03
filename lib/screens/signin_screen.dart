@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/reusable_methods/firebase_methods.dart';
 import 'package:mobile_app/screens/signup_screen.dart';
+import 'package:mobile_app/screens/therapist/therapist_home_screen.dart';
 import '../reusable_widgets/reusable_widget.dart';
 import 'home_screen.dart';
 
@@ -14,6 +16,7 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordTextController = TextEditingController();
   final TextEditingController _emailTextController = TextEditingController();
+  late String role = "";
 
   @override
   Widget build(BuildContext context) {
@@ -69,12 +72,26 @@ class _SignInScreenState extends State<SignInScreen> {
                           email: _emailTextController.text,
                           password: _passwordTextController.text)
                       .then((value) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => HomeScreen(
-                              FirebaseAuth.instance.currentUser!.uid)),
-                    );
+                    String uid = FirebaseAuth.instance.currentUser!.uid;
+                    _fetchRole(uid);
+                    if (role == "user") {
+
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomeScreen(uid)),
+                      );
+                    } else if (role == "therapist"){
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => TherapistHomeScreen(uid)),
+                      );
+                    }
+                    else
+                      {
+                        print("role is null: "+role);
+                      }
+                    ;
+
                   }).onError((error, stackTrace) {
                     print("Error ${error.toString()}");
                   });
@@ -90,6 +107,14 @@ class _SignInScreenState extends State<SignInScreen> {
         ),
       ),
     );
+  }
+
+  void _fetchRole(String uid) {
+    getUserRole(uid).then((role2) {
+      setState(() {
+        role = role2!;
+      });
+    });
   }
 
   Row signUpOption() {

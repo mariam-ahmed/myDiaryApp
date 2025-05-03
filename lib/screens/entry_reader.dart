@@ -73,6 +73,14 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
               ],
             ),
             const SizedBox(height: 30.0),
+            Text(
+              "Classification: ${widget.doc["entry_classification"][0]}",
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 20.0),
 
             // Entry Content
             Expanded(

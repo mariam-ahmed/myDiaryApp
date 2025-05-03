@@ -1,85 +1,122 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/NavBar.dart';
+import 'package:mobile_app/utils/NavBar.dart';
 import 'package:mobile_app/screens/entry_editor.dart';
+import 'package:fl_chart/fl_chart.dart'; // Add this to pubspec.yaml
 
 import '../reusable_methods/firebase_methods.dart';
 import '../reusable_widgets/reusable_widget.dart';
 
 class HomeScreen extends StatefulWidget {
-  String uid = "";
+  final String uid;
 
-  HomeScreen(this.uid, {super.key});
+  const HomeScreen(this.uid, {super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState(this.uid);
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String uid = "";
   String name = "";
-
-  _HomeScreenState(this.uid);
+  List<double> currentWeek = List.filled(7, 0);
+  List<double> lastWeek = List.filled(7, 0);
 
   @override
   void initState() {
     super.initState();
     fetchName();
+    fetchAnalytics();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: NavBar(name, uid),
+      drawer: NavBar(name, widget.uid),
       appBar: AppBar(
         title: Text("Home"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          // Centers the content vertically
-          crossAxisAlignment: CrossAxisAlignment.center,
-          // Centers the content horizontally
+        child: ListView(
           children: [
-            Text(
-              'Hello, Welcome!',
-              style: TextStyle(
-                fontSize: 32, // Large font for the welcome message
-                fontWeight: FontWeight.bold,
+            Center(
+              child: Text(
+                'Hello, Welcome!',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
-              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 50),
-            // Add some space between the text and the button
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () async {
-                if (await canAddEntryToday(uid)) {
+                if (await canAddEntryToday(widget.uid)) {
                   Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => EntryEditorScreen(uid)));
+                    context,
+                    MaterialPageRoute(builder: (context) => EntryEditorScreen(widget.uid)),
+                  );
                 } else {
                   showSnackBar(context, "You've already created today's entry");
                 }
               },
-              child: Text(
-                'Add Today\'s Entry',
-                style: TextStyle(fontSize: 20),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              ),
+              child: Text('Add Today\'s Entry', style: TextStyle(fontSize: 20)),
+              style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
             ),
+            const SizedBox(height: 40),
+            buildMoodTrendGraph(),
           ],
         ),
       ),
     );
   }
 
-  void fetchName() async {
-    String? result = await getName(uid);
+  Future<void> fetchName() async {
+    final result = await getName(widget.uid);
+    if (result != null) {
+      setState(() {
+        name = result;
+      });
+    }
+  }
+
+  Future<void> fetchAnalytics() async {
+    final moodData = await getWeeklyMoodAnalyticsForTherapist(widget.uid);
     setState(() {
-      name = result!;
+      currentWeek = moodData['currentWeek']!;
+      lastWeek = moodData['lastWeek']!;
     });
+  }
+
+  Widget buildMoodTrendGraph() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Weekly Mood Trend", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 200,
+          child: LineChart(
+            LineChartData(
+              lineBarsData: [
+                LineChartBarData(
+                  spots: List.generate(7, (i) => FlSpot(i.toDouble(), currentWeek[i])),
+                  isCurved: true,
+                  color: Colors.blue,
+                  dotData: FlDotData(show: false),
+                  belowBarData: BarAreaData(show: false),
+                ),
+                LineChartBarData(
+                  spots: List.generate(7, (i) => FlSpot(i.toDouble(), lastWeek[i])),
+                  isCurved: true,
+                  color: Colors.grey,
+                  dotData: FlDotData(show: false),
+                  belowBarData: BarAreaData(show: false),
+                ),
+              ],
+              titlesData: FlTitlesData(show: true),
+              borderData: FlBorderData(show: false),
+              gridData: FlGridData(show: false),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
