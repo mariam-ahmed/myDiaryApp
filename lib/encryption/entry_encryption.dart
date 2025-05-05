@@ -57,29 +57,64 @@ class EncryptionService {
   }
 
   // Encrypt classification tag
-  Future<String> encrypt(String text) async {
-    try {
-      final String encrypted = await platform.invokeMethod('encrypt', {'text': text});
-      return encrypted;
-    } catch (e) {
-      print("Encryption Error: $e");
-      return "";
+  Future<List<String>> encryptVector(List<String> oneHotVector) async {
+    List<String> encryptedVector = [];
+    for (var element in oneHotVector) {
+      try {
+        final String encrypted = await platform.invokeMethod('encrypt', {'value': element});
+        encryptedVector.add(encrypted);
+      } catch (e) {
+        print("Encryption Error for element $element: $e");
+        encryptedVector.add(""); // Optional: mark errors
+      }
     }
+    return encryptedVector;
   }
 
-  Future<String> addEncrypted(String c1, String c2) async {
-    return await platform.invokeMethod('addEncrypted', {'c1': c1, 'c2': c2});
+  Future<List<String>> decryptVector(List<String> encryptedVector) async {
+    List<String> decryptedVector = [];
+    for (var encrypted in encryptedVector) {
+      try {
+        final String decrypted = await platform.invokeMethod('decrypt', {'ciphertext': encrypted});
+        decryptedVector.add(decrypted);
+      } catch (e) {
+        print("Decryption Error for element $encrypted: $e");
+        decryptedVector.add(""); // Optional: mark errors
+      }
+    }
+    return decryptedVector;
   }
 
-  // Decrypt classification tag
-  Future<String> decrypt(String ciphertext) async {
-    try {
-      final String decrypted = await platform.invokeMethod('decrypt', {'ciphertext': ciphertext});
-      return decrypted;
-    } catch (e) {
-      print("Decryption Error: $e");
-      return "";
+  Future<List<String>> addEncryptedVectors(
+      List<List<String>> vectors) async {
+    if (vectors.isEmpty) return [];
+    if (vectors.length == 1) return vectors.first;
+
+    // Start with the first vector as initial result
+    List<String> result = List.from(vectors.first);
+
+    // Iterate through remaining vectors
+    for (int i = 1; i < vectors.length; i++) {
+      final currentVector = vectors[i];
+      // Ensure vectors are of same length
+      if (currentVector.length != result.length) {
+        throw Exception("All vectors must be of the same length");
+      }
+
+      // Add current vector to result
+      for (int j = 0; j < result.length; j++) {
+        try {
+          final String sum = await platform.invokeMethod(
+              'addEncrypted', {'c1': result[j], 'c2': currentVector[j]});
+          result[j] = sum;
+        } catch (e) {
+          print("Addition Error at index $j: $e");
+          result[j] = ""; // or handle error differently
+        }
+      }
     }
+
+    return result;
   }
 
   //
@@ -96,25 +131,5 @@ class EncryptionService {
   }
 
   int sign(double value) => value >= 0 ? 1 : -1;
-
-  Future<double> computeAverage(List<int> values, double epsilon) async {
-    final paillier = EncryptionService();
-    List<String> encrypted = [];
-
-    for (int val in values) {
-      encrypted.add(await paillier.encrypt(val as String));
-    }
-
-    String sum = encrypted.first;
-    for (int i = 1; i < encrypted.length; i++) {
-      sum = await paillier.addEncrypted(sum, encrypted[i]);
-    }
-
-    int decryptedSum = (await paillier.decrypt(sum)) as int;
-    double noisyAverage = paillier.addLaplaceNoise(
-        decryptedSum ~/ values.length,  1, epsilon);
-
-    return noisyAverage;
-  }
 
 }

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart'; // To format the date
+import 'package:mobile_app/encryption/classification_encoder.dart';
 import 'package:mobile_app/reusable_methods/tensorFlow_methods.dart';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,7 +21,27 @@ Future<String?> getName(String uid) async {
     DocumentSnapshot doc = querySnapshot.docs.first;
     return (doc.get('first_name') + " " + doc.get('last_name')) as String?;
   } else {
-    return 'No matching document found';
+    return 'No matching name to given uid found';
+  }
+}
+
+Future<String?> getTherapistUID(String name) async {
+  int spaceIndex = name.indexOf(' ');
+
+  String firstName = name.substring(0, spaceIndex);
+  String lastName = name.substring(spaceIndex + 1);
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  QuerySnapshot querySnapshot = await _firestore
+      .collection("users")
+      .where("first_name", isEqualTo: firstName)
+      .where("last_name", isEqualTo: lastName)
+      .get();
+  if (querySnapshot.docs.isNotEmpty) {
+    DocumentSnapshot doc = querySnapshot.docs.first;
+    return (doc.get('uid')) as String?;
+  } else {
+    return 'No matching uid to therapist name found';
   }
 }
 
@@ -66,8 +87,8 @@ Future<DocumentSnapshot?> getEntryTitleByDay(
   }
 }
 
-void createUserAccount(
-    String fName, String lName, String therapist, String pin, String uid) async {
+void createUserAccount(String fName, String lName, String therapist, String pin,
+    String uid) async {
   FirebaseFirestore.instance.collection("users").add({
     "first_name": fName,
     "last_name": lName,
@@ -75,7 +96,7 @@ void createUserAccount(
     "avg_mood_last_week": 0,
     "role": "user",
     "therapist": therapist,
-    "pin": int.parse(pin),
+    "pin": pin,
     "uid": uid,
   }).catchError((error) => print("Failed to Create Account $error"));
 }
@@ -110,11 +131,9 @@ Future<bool> canAddEntryToday(String uid) async {
 Future<bool> addEntry(String uid, String title, double mood, double intensity,
     bool visibility, String entry, BuildContext context) async {
   bool status = false;
-  late List<dynamic> classification;
-  String firstClassification = '';
+  late String classification;
   final Timestamp date2 = Timestamp.now();
-  classification = await classify(entry);
-  firstClassification = classification[0];
+  classification = await classify();
   final encryptionService = EncryptionService();
 
   SecretKey? key = await encryptionService.getStoredKey();
@@ -122,8 +141,10 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
   String prevHash = await computeHash(uid);
 
   final encryptedEntry = await EncryptionService().encryptEntry(entry, key!);
+
+  final encodedClassification = ClassificationEncoder.encode(classification);
   final encryptedClassification =
-      await encryptionService.encrypt(firstClassification);
+      await encryptionService.encryptVector(encodedClassification!);
   final publicKey = await encryptionService.getPublicKey();
 
   FirebaseFirestore.instance.collection("notes").add({
@@ -207,11 +228,12 @@ Future<List<Map<String, dynamic>>> fetchUsersForTherapist(
 //
 // }
 
-
-Future<Map<String, List<double>>> getWeeklyMoodAnalyticsForTherapist(String therapistUid) async {
+Future<Map<String, List<double>>> getAllUserAnalyticsUnderTherapist(
+    String therapistUid) async {
   final firestore = FirebaseFirestore.instance;
   final now = DateTime.now();
-  final startOfThisWeek = now.subtract(Duration(days: now.weekday - 1)); // Monday
+  final startOfThisWeek =
+      now.subtract(Duration(days: now.weekday - 1)); // Monday
   final startOfLastWeek = startOfThisWeek.subtract(Duration(days: 7));
 
   // Initialize mood sums and counts
@@ -233,7 +255,8 @@ Future<Map<String, List<double>>> getWeeklyMoodAnalyticsForTherapist(String ther
   final entriesSnapshot = await firestore
       .collection('journal_entries')
       .where('uid', whereIn: patientUids)
-      .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(fourteenDaysAgo))
+      .where('timestamp',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(fourteenDaysAgo))
       .get();
 
   for (var doc in entriesSnapshot.docs) {
@@ -247,14 +270,17 @@ Future<Map<String, List<double>>> getWeeklyMoodAnalyticsForTherapist(String ther
     if (timestamp.isAfter(startOfThisWeek)) {
       currentWeekSum[dayIndex] += mood;
       currentWeekCount[dayIndex]++;
-    } else if (timestamp.isAfter(startOfLastWeek) && timestamp.isBefore(startOfThisWeek)) {
+    } else if (timestamp.isAfter(startOfLastWeek) &&
+        timestamp.isBefore(startOfThisWeek)) {
       lastWeekSum[dayIndex] += mood;
       lastWeekCount[dayIndex]++;
     }
   }
 
   List<double> currentWeekAvg = List.generate(7, (i) {
-    return currentWeekCount[i] == 0 ? 0 : currentWeekSum[i] / currentWeekCount[i];
+    return currentWeekCount[i] == 0
+        ? 0
+        : currentWeekSum[i] / currentWeekCount[i];
   });
 
   List<double> lastWeekAvg = List.generate(7, (i) {
@@ -266,5 +292,3 @@ Future<Map<String, List<double>>> getWeeklyMoodAnalyticsForTherapist(String ther
     'lastWeek': lastWeekAvg,
   };
 }
-
-

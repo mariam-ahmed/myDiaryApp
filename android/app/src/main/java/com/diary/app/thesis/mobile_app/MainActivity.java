@@ -20,8 +20,8 @@ public class MainActivity extends FlutterActivity {
                 .setMethodCallHandler((call, result) -> {
                     switch (call.method) {
                         case "encrypt":
-                            int value = call.argument("value");
-                            BigInteger ciphertext = paillier.encrypt(BigInteger.valueOf(value));
+                            String value = call.argument("value");
+                            String ciphertext = pheService.encrypt(value);
                             result.success(ciphertext.toString());
                             break;
                         case "decrypt":
@@ -33,7 +33,7 @@ public class MainActivity extends FlutterActivity {
                             String c2Str = call.argument("c2");
                             BigInteger c1 = new BigInteger(c1Str);
                             BigInteger c2 = new BigInteger(c2Str);
-                            BigInteger cSum = paillier.add(c1, c2);
+                            BigInteger cSum = pheService.add(c1, c2);
                             result.success(cSum.toString());
                             break;
                         case "getPublicKey":

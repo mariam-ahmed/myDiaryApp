@@ -77,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> fetchAnalytics() async {
-    final moodData = await getWeeklyMoodAnalyticsForTherapist(widget.uid);
+    final moodData = await getAllUserAnalyticsUnderTherapist(widget.uid);
     setState(() {
       currentWeek = moodData['currentWeek']!;
       lastWeek = moodData['lastWeek']!;

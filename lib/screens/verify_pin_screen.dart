@@ -34,18 +34,13 @@ class _PinVerificationScreenState extends State<PinVerificationScreen> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        setState(() => _errorMessage = "User not authenticated");
-        return;
-      }
-
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .where('uid', isEqualTo: uid)
           .get();
 
-      final storedPin = doc.docs.first?['pin'] ?? '';
+      final storedPin = doc.docs.first?["pin"] ?? '';
+      print("The stored pin is: "+storedPin);
 
       if (storedPin == enteredPin) {
         Navigator.push(context,

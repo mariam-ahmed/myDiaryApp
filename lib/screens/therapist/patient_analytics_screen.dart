@@ -45,7 +45,7 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
       // Fetch this week's entries for label distribution
       final entriesSnapshot = await FirebaseFirestore.instance
           .collection('notes')
-          .where('uid', isEqualTo: widget.uid)
+          .where('uid', isEqualTo: uid)
           .get();
 
       Map<String, List<String>> dayLabels = {};

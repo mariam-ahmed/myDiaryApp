@@ -32,7 +32,7 @@ public class PHEService {
     }
 
     // Encrypt classification tag (homomorphic encryption)
-    public String encrypt(String plaintext, BigInteger publicKey, BigInteger nsquare) {
+    public String encrypt(String plaintext) {
         BigInteger m = new BigInteger(plaintext.getBytes());
         BigInteger r = new BigInteger(bitLength, new SecureRandom());
         BigInteger c = g.modPow(m, nsquare).multiply(r.modPow(n, nsquare)).mod(nsquare);
