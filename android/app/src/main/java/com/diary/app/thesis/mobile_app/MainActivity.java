@@ -22,19 +22,17 @@ public class MainActivity extends FlutterActivity {
                         case "encrypt":
                             String value = call.argument("value");
                             String ciphertext = pheService.encrypt(value);
-                            result.success(ciphertext.toString());
+                            result.success(ciphertext);
                             break;
                         case "decrypt":
                             String decryptedText = pheService.decrypt(call.argument("ciphertext"));
                             result.success(decryptedText);
                             break;
                         case "addEncrypted":
-                            String c1Str = call.argument("c1");
-                            String c2Str = call.argument("c2");
-                            BigInteger c1 = new BigInteger(c1Str);
-                            BigInteger c2 = new BigInteger(c2Str);
-                            BigInteger cSum = pheService.add(c1, c2);
-                            result.success(cSum.toString());
+                            String c1 = call.argument("c1");
+                            String c2 = call.argument("c2");
+                            String cSum = pheService.add(c1, c2);
+                            result.success(cSum);
                             break;
                         case "getPublicKey":
                             result.success(pheService.getPublicKey());

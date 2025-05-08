@@ -33,21 +33,38 @@ public class PHEService {
 
     // Encrypt classification tag (homomorphic encryption)
     public String encrypt(String plaintext) {
-        BigInteger m = new BigInteger(plaintext.getBytes());
+        BigInteger m = new BigInteger(plaintext);
+        System.out.println("Plaintext (m): " + m);
+
         BigInteger r = new BigInteger(bitLength, new SecureRandom());
+        System.out.println("Random (r): " + r);
+
         BigInteger c = g.modPow(m, nsquare).multiply(r.modPow(n, nsquare)).mod(nsquare);
+        System.out.println("Encrypted (c): " + c);
+
         return c.toString();
     }
 
     // Decrypt classification tag
     public String decrypt(String ciphertext) {
         BigInteger c = new BigInteger(ciphertext);
+        System.out.println("Ciphertext (c): " + c);
         BigInteger u = c.modPow(lambda, nsquare).subtract(BigInteger.ONE).divide(n);
+        System.out.println("Intermediate (u): " + u);
         BigInteger m = u.multiply(mu).mod(n);
-        return new String(m.toByteArray());
+        System.out.println("Decrypted (m): " + m);
+        return m.toString();
     }
 
-    public BigInteger add(BigInteger c1, BigInteger c2) {
-        return c1.multiply(c2).mod(nsquare);
+    public String add(String c1Str, String c2Str) {
+        // Convert String inputs to BigInteger
+        BigInteger c1 = new BigInteger(c1Str);
+        BigInteger c2 = new BigInteger(c2Str);
+
+        // Perform Paillier addition: c1 * c2 mod n²
+        BigInteger result = c1.multiply(c2).mod(nsquare);
+
+        // Return the result as a String
+        return result.toString();
     }
 }

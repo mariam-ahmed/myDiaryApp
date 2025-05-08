@@ -4,18 +4,22 @@ import 'package:mobile_app/screens/entry_editor.dart';
 import 'package:fl_chart/fl_chart.dart'; // Add this to pubspec.yaml
 
 import '../reusable_methods/firebase_methods.dart';
+import '../reusable_methods/mood_calculations.dart';
 import '../reusable_widgets/reusable_widget.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String uid;
+  String uid = "";
 
-  const HomeScreen(this.uid, {super.key});
+  HomeScreen(this.uid, {super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState(uid);
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String uid = "";
+  _HomeScreenState(this.uid);
+
   String name = "";
   List<double> currentWeek = List.filled(7, 0);
   List<double> lastWeek = List.filled(7, 0);
@@ -25,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     fetchName();
     fetchAnalytics();
+    checkAndResetWeeklyMood(uid);
   }
 
   @override

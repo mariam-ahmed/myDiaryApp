@@ -56,6 +56,10 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
         moods.add(mood);
       }
     }
+    List<String> decryptedAvgMoods = await es.decryptVector(moods);
+    for (var number in decryptedAvgMoods) {
+        totalMood += double.parse(number);
+    }
 
     setState(() {
       avgMood = moodCount > 0 ? totalMood / moodCount : 0;
@@ -125,7 +129,7 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
               ),
               const SizedBox(height: 20.0),
 
-              Text("Average Mood: ${avgMood.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 16)),
+              Text("Average Mood This week: ${avgMood.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 16)),
               const SizedBox(height: 10),
 
               if (todayLabelDistribution.isNotEmpty)

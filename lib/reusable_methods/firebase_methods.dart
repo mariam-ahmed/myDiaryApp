@@ -147,11 +147,14 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
       await encryptionService.encryptVector(encodedClassification!);
   final publicKey = await encryptionService.getPublicKey();
 
+  double totalMood = mood*intensity;
+
   FirebaseFirestore.instance.collection("notes").add({
     "entry_title": title,
     "entry_date": date2,
     "entry_mood": mood,
     "entry_mood_intensity": intensity,
+    "entry_mood_total": totalMood,
     "entry_content": encryptedEntry,
     "entry_classification": encryptedClassification,
     "prev_entry_hash": prevHash,
@@ -159,7 +162,7 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
     "uid": uid,
     "public_key": publicKey,
   }).then((value) {
-    updateMood(uid, mood);
+    updateMood(uid, totalMood);
     Navigator.pop(context);
     showSnackBar(context, "Entry Saved Successfully");
     status = true;
@@ -222,11 +225,6 @@ Future<List<Map<String, dynamic>>> fetchUsersForTherapist(
     return [];
   }
 }
-
-// Future<int> verifyPin()
-// {
-//
-// }
 
 Future<Map<String, List<double>>> getAllUserAnalyticsUnderTherapist(
     String therapistUid) async {

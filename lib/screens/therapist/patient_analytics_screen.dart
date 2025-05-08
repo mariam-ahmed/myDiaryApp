@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_app/encryption/entry_encryption.dart';
 
 class PatientAnalyticsScreen extends StatefulWidget {
   final String uid;
@@ -13,6 +14,7 @@ class PatientAnalyticsScreen extends StatefulWidget {
 class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
   String uid = "";
   bool isLoading = false;
+  EncryptionService es = new EncryptionService();
 
   double avgMoodThisWeek = 0;
   double avgMoodLastWeek = 0;
@@ -39,8 +41,11 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
           .where('uid', isEqualTo: uid)
           .get();
 
-      double avgThisWeek = userDoc.docs.first?['avg_mood']?.toDouble() ?? 0.0;
-      double avgLastWeek = userDoc.docs.first?['avg_mood_last_week']?.toDouble() ?? 0.0;
+      String avgThisWeek = await es.decryptValue(userDoc.docs.first.get('avg_mood'));
+      String avgLastWeek = await es.decryptValue(userDoc.docs.first.get('avg_mood_last_week'));
+
+      double dAvgThisWeek = double.parse(avgThisWeek);
+      double dAvgLastWeek = double.parse(avgLastWeek);
 
       // Fetch this week's entries for label distribution
       final entriesSnapshot = await FirebaseFirestore.instance
@@ -62,8 +67,8 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
       }
 
       setState(() {
-        avgMoodThisWeek = avgThisWeek;
-        avgMoodLastWeek = avgLastWeek;
+        avgMoodThisWeek = dAvgThisWeek;
+        avgMoodLastWeek = dAvgLastWeek;
         labelsPerDay = dayLabels;
         isLoading = false;
       });

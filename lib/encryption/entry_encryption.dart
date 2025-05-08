@@ -85,6 +85,30 @@ class EncryptionService {
     return decryptedVector;
   }
 
+  //Encrypt and decrypt single value (mood)
+  Future<String> encryptValue(String value) async {
+    String encryptedValue = "";
+      try {
+        final String encrypted = await platform.invokeMethod('encrypt', {'value': value});
+        encryptedValue = encrypted;
+      } catch (e) {
+        print("Encryption Error for element $encryptedValue: $e");
+      }
+
+    return encryptedValue;
+  }
+
+  Future<String> decryptValue(String encryptedValue) async {
+    String deccryptedValue = "";
+      try {
+        final String decrypted = await platform.invokeMethod('decrypt', {'ciphertext': encryptedValue});
+        deccryptedValue = decrypted;
+      } catch (e) {
+        print("Decryption Error for element $encryptedValue: $e");
+      }
+    return deccryptedValue;
+  }
+
   Future<List<String>> addEncryptedVectors(
       List<List<String>> vectors) async {
     if (vectors.isEmpty) return [];
@@ -116,6 +140,8 @@ class EncryptionService {
 
     return result;
   }
+
+
 
   //
   //
