@@ -37,17 +37,16 @@ async {
 
   int count = await countFieldOccurrences(uid);
   String? sAvgMood = (await fetchAvgMood(uid));
-  String? dAvgMood = await es.decryptValue(sAvgMood!);
-  double avgMood = double.parse(dAvgMood!);
+  double avgMood = double.parse(sAvgMood!);
   double currentSum = avgMood*(count-1);
   currentSum += mood;
-  double newAvg = currentSum/count;
-  return (newAvg.toStringAsFixed(2));
+  double newAvg = currentSum/(count+1);
+  String eNewAvg = await es.encryptValue(newAvg.toString());
+  return (eNewAvg);
 }
 
 void updateMood(String uid, double mood) async
 {
-  //TODO: continue to make it work
   try {
     QuerySnapshot querySnapshot = await _firestore
         .collection("users")

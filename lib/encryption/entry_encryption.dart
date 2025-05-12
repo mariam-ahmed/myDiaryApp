@@ -38,6 +38,35 @@ class EncryptionService {
     return SecretKey(keyBytes);
   }
 
+  /// Decrypts a base64-encoded AES-GCM ciphertext using the stored secret key
+  Future<String> decryptEntry(String base64Ciphertext) async {
+    try {
+      final secretBoxBytes = base64Decode(base64Ciphertext);
+
+      // Parse full secret box
+      final secretBox = SecretBox.fromConcatenation(
+        secretBoxBytes,
+        nonceLength: 12, // GCM uses 12-byte nonce
+        macLength: 16,   // GCM uses 16-byte tag
+      );
+
+      final secretKey = await getStoredKey();
+      if (secretKey == null) {
+        throw Exception("Encryption key not found");
+      }
+
+      final clearBytes = await algorithm.decrypt(
+        secretBox,
+        secretKey: secretKey,
+      );
+
+      return utf8.decode(clearBytes);
+    } catch (e) {
+      print("Decryption error: $e");
+      return "Decryption failed";
+    }
+  }
+
   //
   //
   // PLATFORM CHANNELING
@@ -88,8 +117,11 @@ class EncryptionService {
   //Encrypt and decrypt single value (mood)
   Future<String> encryptValue(String value) async {
     String encryptedValue = "";
+    double doubleValue = double.parse(value);
+    int scaledValue = (doubleValue * 1000).round();
+
       try {
-        final String encrypted = await platform.invokeMethod('encrypt', {'value': value});
+        final String encrypted = await platform.invokeMethod('encrypt', {'value': scaledValue.toString()});
         encryptedValue = encrypted;
       } catch (e) {
         print("Encryption Error for element $encryptedValue: $e");
@@ -99,14 +131,17 @@ class EncryptionService {
   }
 
   Future<String> decryptValue(String encryptedValue) async {
-    String deccryptedValue = "";
+    String decryptedValue = "";
       try {
         final String decrypted = await platform.invokeMethod('decrypt', {'ciphertext': encryptedValue});
-        deccryptedValue = decrypted;
+
+        int scaledInt = int.parse(decrypted);
+        double result = scaledInt / 1000.0; // reverse scaling
+        decryptedValue = result.toStringAsFixed(3);
       } catch (e) {
         print("Decryption Error for element $encryptedValue: $e");
       }
-    return deccryptedValue;
+    return decryptedValue;
   }
 
   Future<List<String>> addEncryptedVectors(

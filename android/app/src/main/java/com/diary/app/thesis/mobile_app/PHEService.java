@@ -4,8 +4,8 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 
 public class PHEService {
-    private BigInteger n, nsquare, g, lambda, mu;
-    private int bitLength = 1024; // Secure bit length
+    private static BigInteger n, nsquare, g, lambda, mu;
+    private static int bitLength = 1024; // Secure bit length
 
     public PHEService() {
         keyGeneration();
@@ -20,7 +20,7 @@ public class PHEService {
     }
 
     // Key generation for Paillier Homomorphic Encryption
-    private void keyGeneration() {
+    private static void keyGeneration() {
         SecureRandom random = new SecureRandom();
         BigInteger p = BigInteger.probablePrime(bitLength / 2, random);
         BigInteger q = BigInteger.probablePrime(bitLength / 2, random);

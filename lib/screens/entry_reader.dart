@@ -2,8 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/utils/color_utils.dart';
 
+import '../encryption/classification_encoder.dart';
+import '../encryption/entry_encryption.dart';
+
 class EntryReaderScreen extends StatefulWidget {
   final QueryDocumentSnapshot doc;
+
   const EntryReaderScreen(this.doc, {super.key});
 
   @override
@@ -11,12 +15,49 @@ class EntryReaderScreen extends StatefulWidget {
 }
 
 class _EntryReaderScreenState extends State<EntryReaderScreen> {
+  String mood = '';
+  String intensity = '';
+  String entry = '';
+  String classification = '';
+  final EncryptionService encryptionService = EncryptionService();
+
+  @override
+  void initState() {
+    super.initState();
+    decryptValues();
+  }
+
+  void decryptValues() async {
+    String moodDecrypted =
+        await encryptionService.decryptValue(widget.doc["entry_mood"]);
+    String intensityDecrypted = await encryptionService
+        .decryptValue(widget.doc["entry_mood_intensity"]);
+    String entryDecrypted =
+        await encryptionService.decryptEntry(widget.doc["entry_content"]);
+
+    // Decrypt classification vector (one-hot encoded)
+    List<String> encClass = List<String>.from(widget.doc["entry_classification"]);
+    List<String> decryptedVector = await encryptionService.decryptVector(encClass);
+
+    // Find the classification label
+    String? label = await ClassificationEncoder.decode(decryptedVector);
+
+    setState(() {
+      mood = moodDecrypted;
+      intensity = intensityDecrypted;
+      entry = entryDecrypted;
+      classification = label!;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: hexStringToColor("#DCDCDC"),  // Set the background color to match the theme
+      backgroundColor: hexStringToColor("#DCDCDC"),
+      // Set the background color to match the theme
       appBar: AppBar(
-        backgroundColor: Colors.teal.shade300,  // Use a solid color for the AppBar
+        backgroundColor: Colors.teal.shade300,
+        // Use a solid color for the AppBar
         elevation: 0.0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -24,7 +65,8 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
             Navigator.pop(context);
           },
         ),
-        title: const Text("Entry Details", style: TextStyle(color: Colors.white)),
+        title:
+            const Text("Entry Details", style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -57,14 +99,14 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Mood: ${widget.doc["entry_mood"]}",
+                  "Mood: ${mood}",
                   style: TextStyle(
                     color: Colors.teal.shade700,
                     fontSize: 16,
                   ),
                 ),
                 Text(
-                  "Intensity: ${widget.doc["entry_mood_intensity"]}",
+                  "Intensity: ${intensity}",
                   style: TextStyle(
                     color: Colors.teal.shade700,
                     fontSize: 16,
@@ -74,7 +116,7 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
             ),
             const SizedBox(height: 30.0),
             Text(
-              "Classification: ${widget.doc["entry_classification"][0]}",
+              "Classification: ${classification}",
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 14,
@@ -86,11 +128,11 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Text(
-                  widget.doc["entry_content"],
+                  entry,
                   style: const TextStyle(
                     color: Colors.black87,
                     fontSize: 16,
-                    height: 1.5,  // Line spacing for better readability
+                    height: 1.5, // Line spacing for better readability
                   ),
                 ),
               ),

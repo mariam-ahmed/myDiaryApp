@@ -18,6 +18,7 @@ class PatientOverviewScreen extends StatefulWidget {
 
 class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
   List<Map<String, dynamic>> assignedUsers = [];
+  Map<int, int> moodDistribution = {};
   String therapistName = "";
   double avgMood = 0;
   Map<String, String> todayLabelDistribution = {};
@@ -45,24 +46,37 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
   Future<void> loadAverageMood() async {
     double totalMood = 0;
     int moodCount = 0;
-    List<String> moods = [];
+    List<double> moods = [];
 
     for (var user in assignedUsers) {
       String puid = user["uid"];
       String? mood = await getAvgMood(puid);
       if (mood != null) {
-        totalMood += double.parse(mood);
+        double dmood = double.parse(mood);
+        totalMood += dmood;
         moodCount++;
-        moods.add(mood);
+        moods.add(dmood);
       }
     }
-    List<String> decryptedAvgMoods = await es.decryptVector(moods);
-    for (var number in decryptedAvgMoods) {
-        totalMood += double.parse(number);
+
+    Map<int, int> moodCounts = {5: 0, 10: 0, 15: 0, 20: 0, 25: 0};
+    for (var score in moods) {
+      if (score <= 5) {
+        moodCounts[5] = moodCounts[5]! + 1;
+      } else if (score <= 10) {
+        moodCounts[10] = moodCounts[10]! + 1;
+      } else if (score <= 15) {
+        moodCounts[15] = moodCounts[15]! + 1;
+      } else if (score <= 20) {
+        moodCounts[20] = moodCounts[20]! + 1;
+      } else {
+        moodCounts[25] = moodCounts[25]! + 1;
+      }
     }
 
     setState(() {
       avgMood = moodCount > 0 ? totalMood / moodCount : 0;
+      moodDistribution = moodCounts;
     });
   }
 
@@ -130,7 +144,26 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
               const SizedBox(height: 20.0),
 
               Text("Average Mood This week: ${avgMood.toStringAsFixed(2)}", style: const TextStyle(color: Colors.white, fontSize: 16)),
-              const SizedBox(height: 10),
+
+              const SizedBox(height: 20.0),
+
+              // 🔹 Mood Distribution Chart
+              const Text("Mood Distribution (1–25 Scale)", style: TextStyle(color: Colors.white)),
+              SizedBox(
+                height: 150,
+                child: BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    barGroups: moodDistribution.entries.map((e) {
+                      return BarChartGroupData(x: e.key, barRods: [
+                        BarChartRodData(toY: e.value.toDouble(), color: Colors.cyanAccent)
+                      ]);
+                    }).toList(),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
 
               if (todayLabelDistribution.isNotEmpty)
                 SizedBox(

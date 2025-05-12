@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/encryption/entry_encryption.dart';
 
+import '../../encryption/classification_encoder.dart';
+
 class PatientAnalyticsScreen extends StatefulWidget {
   final String uid;
   const PatientAnalyticsScreen(this.uid, {super.key});
@@ -48,6 +50,7 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
       double dAvgLastWeek = double.parse(avgLastWeek);
 
       // Fetch this week's entries for label distribution
+      final EncryptionService encryptionService = EncryptionService();
       final entriesSnapshot = await FirebaseFirestore.instance
           .collection('notes')
           .where('uid', isEqualTo: uid)
@@ -60,9 +63,15 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
         final entryDate = (data['entry_date'] as Timestamp).toDate();
 
         if (entryDate.isAfter(thisWeekStart)) {
-          final label = data['entry_classification'] ?? 'Unlabeled';
+          final encryptedVector = List<String>.from(data['entry_classification']);
+          final decryptedStrVector = await encryptionService.decryptVector(encryptedVector);
+
+          // Convert string values to integers (assuming one-hot encoding)
+          final List<String> decodedVector = decryptedStrVector.map((e) => e ?? "0").toList();
+          final decodedLabel = ClassificationEncoder.decode(decodedVector);
+
           final day = DateFormat.E().format(entryDate);
-          dayLabels.putIfAbsent(day, () => []).add(label);
+          dayLabels.putIfAbsent(day, () => []).add(decodedLabel!);
         }
       }
 

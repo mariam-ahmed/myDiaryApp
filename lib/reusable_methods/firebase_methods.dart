@@ -47,16 +47,19 @@ Future<String?> getTherapistUID(String name) async {
 
 Future<String?> getAvgMood(String uid) async {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  EncryptionService es = new EncryptionService();
   String? avgMood = '';
+  String davgMood = '';
   QuerySnapshot querySnapshot =
       await _firestore.collection("users").where("uid", isEqualTo: uid).get();
   if (querySnapshot.docs.isNotEmpty) {
     DocumentSnapshot doc = querySnapshot.docs.first;
     avgMood = doc.get('avg_mood').toString();
+    davgMood = await es.decryptValue(avgMood);
   } else if (querySnapshot.docs.isEmpty || avgMood == null) {
-    avgMood = 'No matching document found';
+    davgMood = 'No matching document found';
   }
-  return avgMood;
+  return davgMood;
 }
 
 Future<DocumentSnapshot?> getEntryTitleByDay(
@@ -89,11 +92,14 @@ Future<DocumentSnapshot?> getEntryTitleByDay(
 
 void createUserAccount(String fName, String lName, String therapist, String pin,
     String uid) async {
+  EncryptionService es = new EncryptionService();
+  String eAvgMood = await es.encryptValue("0");
+
   FirebaseFirestore.instance.collection("users").add({
     "first_name": fName,
     "last_name": lName,
-    "avg_mood": 0,
-    "avg_mood_last_week": 0,
+    "avg_mood": eAvgMood,
+    "avg_mood_last_week": eAvgMood,
     "role": "user",
     "therapist": therapist,
     "pin": pin,
@@ -136,25 +142,29 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
   classification = await classify();
   final encryptionService = EncryptionService();
 
+  //Encrypt Entry
   SecretKey? key = await encryptionService.getStoredKey();
-
   String prevHash = await computeHash(uid);
-
   final encryptedEntry = await EncryptionService().encryptEntry(entry, key!);
 
+  //Encrypt Classification
   final encodedClassification = ClassificationEncoder.encode(classification);
   final encryptedClassification =
       await encryptionService.encryptVector(encodedClassification!);
   final publicKey = await encryptionService.getPublicKey();
 
+  //Encrypt mood and intensity
   double totalMood = mood*intensity;
+  String eMood = await encryptionService.encryptValue(mood.toString());
+  String eIntenity = await encryptionService.encryptValue(intensity.toString());
+  String eTotalMood = await encryptionService.encryptValue(totalMood.toString());
 
   FirebaseFirestore.instance.collection("notes").add({
     "entry_title": title,
     "entry_date": date2,
-    "entry_mood": mood,
-    "entry_mood_intensity": intensity,
-    "entry_mood_total": totalMood,
+    "entry_mood": eMood,
+    "entry_mood_intensity": eIntenity,
+    "entry_mood_total": eTotalMood,
     "entry_content": encryptedEntry,
     "entry_classification": encryptedClassification,
     "prev_entry_hash": prevHash,
