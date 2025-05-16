@@ -4,6 +4,7 @@ import 'package:mobile_app/utils/color_utils.dart';
 
 import '../encryption/classification_encoder.dart';
 import '../encryption/entry_encryption.dart';
+import '../encryption/phe_encryption.dart';
 
 class EntryReaderScreen extends StatefulWidget {
   final QueryDocumentSnapshot doc;
@@ -20,6 +21,7 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
   String entry = '';
   String classification = '';
   final EncryptionService encryptionService = EncryptionService();
+  final PHEEncryptionService pheencryptionService = PHEEncryptionService();
 
   @override
   void initState() {
@@ -29,15 +31,15 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
 
   void decryptValues() async {
     String moodDecrypted =
-        await encryptionService.decryptValue(widget.doc["entry_mood"]);
-    String intensityDecrypted = await encryptionService
+        await pheencryptionService.decryptValue(widget.doc["entry_mood"]);
+    String intensityDecrypted = await pheencryptionService
         .decryptValue(widget.doc["entry_mood_intensity"]);
     String entryDecrypted =
         await encryptionService.decryptEntry(widget.doc["entry_content"]);
 
     // Decrypt classification vector (one-hot encoded)
     List<String> encClass = List<String>.from(widget.doc["entry_classification"]);
-    List<String> decryptedVector = await encryptionService.decryptVector(encClass);
+    List<String> decryptedVector = await pheencryptionService.decryptVector(encClass);
 
     // Find the classification label
     String? label = await ClassificationEncoder.decode(decryptedVector);

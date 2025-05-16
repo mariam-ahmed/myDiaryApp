@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:mobile_app/encryption/entry_encryption.dart';
 
 import '../../encryption/classification_encoder.dart';
+import '../../encryption/phe_encryption.dart';
 
 class PatientAnalyticsScreen extends StatefulWidget {
   final String uid;
@@ -17,6 +18,7 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
   String uid = "";
   bool isLoading = false;
   EncryptionService es = new EncryptionService();
+  PHEEncryptionService pes = PHEEncryptionService();
 
   double avgMoodThisWeek = 0;
   double avgMoodLastWeek = 0;
@@ -43,14 +45,13 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
           .where('uid', isEqualTo: uid)
           .get();
 
-      String avgThisWeek = await es.decryptValue(userDoc.docs.first.get('avg_mood'));
-      String avgLastWeek = await es.decryptValue(userDoc.docs.first.get('avg_mood_last_week'));
+      String avgThisWeek = await pes.decryptValue(userDoc.docs.first.get('avg_mood'));
+      String avgLastWeek = await pes.decryptValue(userDoc.docs.first.get('avg_mood_last_week'));
 
       double dAvgThisWeek = double.parse(avgThisWeek);
       double dAvgLastWeek = double.parse(avgLastWeek);
 
       // Fetch this week's entries for label distribution
-      final EncryptionService encryptionService = EncryptionService();
       final entriesSnapshot = await FirebaseFirestore.instance
           .collection('notes')
           .where('uid', isEqualTo: uid)
@@ -64,7 +65,7 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
 
         if (entryDate.isAfter(thisWeekStart)) {
           final encryptedVector = List<String>.from(data['entry_classification']);
-          final decryptedStrVector = await encryptionService.decryptVector(encryptedVector);
+          final decryptedStrVector = await pes.decryptVector(encryptedVector);
 
           // Convert string values to integers (assuming one-hot encoding)
           final List<String> decodedVector = decryptedStrVector.map((e) => e ?? "0").toList();

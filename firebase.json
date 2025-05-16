@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"diaryapp-51d01","appId":"1:137425184726:android:edda76320e436be49f6677","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"diaryapp-51d01","configurations":{"android":"1:137425184726:android:edda76320e436be49f6677","ios":"1:137425184726:ios:df91cbdbd14b2f0b9f6677"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "diaryapp-51d01",
+          "appId": "1:137425184726:android:edda76320e436be49f6677",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "diaryapp-51d01",
+          "configurations": {
+            "android": "1:137425184726:android:edda76320e436be49f6677",
+            "ios": "1:137425184726:ios:df91cbdbd14b2f0b9f6677"
+          }
+        }
+      }
+    }
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
+    "hub": {
+      "enabled": true,
+      "port": 4400
+    },
+    "singleProjectMode": true
+  }
+}

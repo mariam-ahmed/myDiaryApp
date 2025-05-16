@@ -2,10 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mobile_app/firebase_options.dart';
 import 'package:mobile_app/screens/signin_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  //
+  // // Firestore Emulator
+  // FirebaseFirestore.instance.useFirestoreEmulator('10.0.2.2', 8080);
+  //
+  // // Firebase Auth Emulator
+  // FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
+
   runApp(const MyApp());
 }
 

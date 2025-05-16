@@ -7,6 +7,8 @@ import 'package:mobile_app/screens/therapist/patient_analytics_screen.dart';
 import 'package:mobile_app/reusable_widgets/patient_card.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+import '../../encryption/phe_encryption.dart';
+
 class PatientOverviewScreen extends StatefulWidget {
   final String uid;
 
@@ -23,6 +25,7 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
   double avgMood = 0;
   Map<String, String> todayLabelDistribution = {};
   EncryptionService es = EncryptionService();
+  PHEEncryptionService pes = PHEEncryptionService();
 
   @override
   void initState() {
@@ -103,8 +106,8 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
       }
     }
 
-    List<String> sumVector = await es.addEncryptedVectors(encryptedVectors);
-    List<String> decryptedCounts = await es.decryptVector(sumVector);
+    List<String> sumVector = await pes.addEncryptedVectors(encryptedVectors);
+    List<String> decryptedCounts = await pes.decryptVector(sumVector);
 
     Map<String, String> labelCounts = {};
     for (int i = 0; i < decryptedCounts.length; i++) {

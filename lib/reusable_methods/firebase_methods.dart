@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 import '../encryption/blockchain_methods.dart';
 import '../encryption/entry_encryption.dart';
+import '../encryption/phe_encryption.dart';
 import '../reusable_widgets/reusable_widget.dart';
 import 'mood_calculations.dart';
 
@@ -47,7 +48,7 @@ Future<String?> getTherapistUID(String name) async {
 
 Future<String?> getAvgMood(String uid) async {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  EncryptionService es = new EncryptionService();
+  PHEEncryptionService pes = PHEEncryptionService();
   String? avgMood = '';
   String davgMood = '';
   QuerySnapshot querySnapshot =
@@ -55,11 +56,25 @@ Future<String?> getAvgMood(String uid) async {
   if (querySnapshot.docs.isNotEmpty) {
     DocumentSnapshot doc = querySnapshot.docs.first;
     avgMood = doc.get('avg_mood').toString();
-    davgMood = await es.decryptValue(avgMood);
+    davgMood = await pes.decryptValue(avgMood);
   } else if (querySnapshot.docs.isEmpty || avgMood == null) {
     davgMood = 'No matching document found';
   }
   return davgMood;
+}
+
+Future<String?> getDecryptedAvgMood(String uid) async {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? avgMood = '';
+  QuerySnapshot querySnapshot =
+  await _firestore.collection("users").where("uid", isEqualTo: uid).get();
+  if (querySnapshot.docs.isNotEmpty) {
+    DocumentSnapshot doc = querySnapshot.docs.first;
+    avgMood = doc.get('avg_mood').toString();
+  } else if (querySnapshot.docs.isEmpty || avgMood == null) {
+    avgMood = 'No matching document found';
+  }
+  return avgMood;
 }
 
 Future<DocumentSnapshot?> getEntryTitleByDay(
@@ -92,8 +107,8 @@ Future<DocumentSnapshot?> getEntryTitleByDay(
 
 void createUserAccount(String fName, String lName, String therapist, String pin,
     String uid) async {
-  EncryptionService es = new EncryptionService();
-  String eAvgMood = await es.encryptValue("0");
+  PHEEncryptionService pes = PHEEncryptionService();
+  String eAvgMood = await pes.encryptValue("0");
 
   FirebaseFirestore.instance.collection("users").add({
     "first_name": fName,
@@ -140,24 +155,32 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
   late String classification;
   final Timestamp date2 = Timestamp.now();
   classification = await classify();
-  final encryptionService = EncryptionService();
+  final es = new EncryptionService();
+  PHEEncryptionService pes = PHEEncryptionService();
+
+  //Check hash safety of blockchain
+  bool isValid = await verifyEntryChain(uid);
+  if (!isValid) {
+    showSnackBar(context, "Hash chain integrity failed!");
+    return false;
+  }
 
   //Encrypt Entry
-  SecretKey? key = await encryptionService.getStoredKey();
+  SecretKey? key = await es.getStoredKey();
   String prevHash = await computeHash(uid);
   final encryptedEntry = await EncryptionService().encryptEntry(entry, key!);
 
   //Encrypt Classification
   final encodedClassification = ClassificationEncoder.encode(classification);
   final encryptedClassification =
-      await encryptionService.encryptVector(encodedClassification!);
-  final publicKey = await encryptionService.getPublicKey();
+      await pes.encryptVector(encodedClassification!);
+  final publicKey = await pes.getPublicKey();
 
   //Encrypt mood and intensity
   double totalMood = mood*intensity;
-  String eMood = await encryptionService.encryptValue(mood.toString());
-  String eIntenity = await encryptionService.encryptValue(intensity.toString());
-  String eTotalMood = await encryptionService.encryptValue(totalMood.toString());
+  String eMood = await pes.encryptValue(mood.toString());
+  String eIntenity = await pes.encryptValue(intensity.toString());
+  String eTotalMood = await pes.encryptValue(totalMood.toString());
 
   FirebaseFirestore.instance.collection("notes").add({
     "entry_title": title,
