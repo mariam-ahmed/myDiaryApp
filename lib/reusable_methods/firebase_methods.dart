@@ -167,14 +167,14 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
 
   //Encrypt Entry
   SecretKey? key = await es.getStoredKey();
+  var keyBytes = await key?.extractBytes();
   String prevHash = await computeHash(uid);
-  final encryptedEntry = await EncryptionService().encryptEntry(entry, key!);
+  final encryptedEntry = await es.encryptEntry(entry, key!);
 
   //Encrypt Classification
   final encodedClassification = ClassificationEncoder.encode(classification);
   final encryptedClassification =
       await pes.encryptVector(encodedClassification!);
-  final publicKey = await pes.getPublicKey();
 
   //Encrypt mood and intensity
   double totalMood = mood*intensity;
@@ -193,7 +193,7 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
     "prev_entry_hash": prevHash,
     "visibility": visibility,
     "uid": uid,
-    "public_key": publicKey,
+    "public_key": keyBytes,
   }).then((value) {
     updateMood(uid, totalMood);
     Navigator.pop(context);
@@ -322,4 +322,31 @@ Future<Map<String, List<double>>> getAllUserAnalyticsUnderTherapist(
     'currentWeek': currentWeekAvg,
     'lastWeek': lastWeekAvg,
   };
+}
+
+Future<String> checkEntryVisibility(String entryId, String uid) async {
+  EncryptionService es = new EncryptionService();
+  try {
+    final doc = await FirebaseFirestore.instance
+        .collection('notes')
+        .doc(entryId)
+        .get();
+
+    if (!doc.exists) return "Entry not found";
+
+    final data = doc.data()!;
+    if (data['visibility'] == false) return "Entry is private";
+
+    // Extract fields
+    final String encryptedText = data['entry_content'];
+    final List<int> keyBytes = (data['public_key'] as List).cast<int>();
+    final SecretKey secretKey = SecretKey(keyBytes);
+
+    final decryptedText = await es.decryptUserEntry(encryptedText, secretKey);
+
+    return decryptedText;
+  } catch (e) {
+    print("Decryption error: $e");
+    return "Decryption failed or entry not accessible";
+  }
 }

@@ -97,12 +97,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     _passwordTextController),
                 const SizedBox(height: 30),
 
-                TextField(
-                  controller: _pinTextController,
+                reusableTextField(
+                  "Enter 4-digit PIN",
+                  Icons.lock,
+                  true,
+                  _pinTextController,
                   keyboardType: TextInputType.number,
-                  obscureText: true,
                   maxLength: 4,
-                  decoration: const InputDecoration(labelText: "PIN"),
                 ),
 
                 // Role Selection (Radio Buttons)
@@ -188,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             builder: (context) => HomeScreen(
                                 FirebaseAuth.instance.currentUser!.uid)),
                       );
-                    } else {
+                    } else if (selectedRole == "Therapist") {
                       createTherapistAccount(
                           _firstNameTextController.text,
                           _lastNameTextController.text,
@@ -200,15 +201,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 FirebaseAuth.instance.currentUser!.uid)),
                       );
                     }
+                    else {
+                      print("Could not figure out role for signup");
+                    }
                     ;
                     print("Created New Account");
                     await encryptionService.generateAndStoreKey();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => HomeScreen(
-                              FirebaseAuth.instance.currentUser!.uid)),
-                    );
                   }).onError((error, stackTrace) {
                     print("Error ${error.toString()}");
                   });

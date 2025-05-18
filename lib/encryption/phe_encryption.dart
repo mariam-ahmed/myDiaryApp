@@ -42,7 +42,7 @@ class PHEEncryptionService
         final String decrypted = await platform.invokeMethod('decrypt', {'ciphertext': encrypted});
         decryptedVector.add(decrypted);
       } catch (e) {
-        print("Decryption Error for element $encrypted: $e");
+        print("Decryption Error in vector for element $encrypted: $e");
         decryptedVector.add(""); // Optional: mark errors
       }
     }

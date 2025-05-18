@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/encryption/entry_encryption.dart';
-
 import '../../encryption/classification_encoder.dart';
 import '../../encryption/phe_encryption.dart';
+import '../../reusable_methods/firebase_methods.dart';
 
 class PatientAnalyticsScreen extends StatefulWidget {
   final String uid;
@@ -22,7 +22,7 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
 
   double avgMoodThisWeek = 0;
   double avgMoodLastWeek = 0;
-  Map<String, List<String>> labelsPerDay = {};
+  Map<String, List<Map<String, String>>> labelsPerDay = {};
 
   _PatientAnalyticsScreenState(this.uid);
 
@@ -36,43 +36,49 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
     setState(() => isLoading = true);
 
     final now = DateTime.now();
-    final thisWeekStart = DateTime(now.year, now.month, now.day - (now.weekday - 1));
+    final thisWeekStart = DateTime(
+        now.year, now.month, now.day - (now.weekday - 1));
 
     try {
-      // Fetch average moods directly from user's profile
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .where('uid', isEqualTo: uid)
           .get();
 
-      String avgThisWeek = await pes.decryptValue(userDoc.docs.first.get('avg_mood'));
-      String avgLastWeek = await pes.decryptValue(userDoc.docs.first.get('avg_mood_last_week'));
+      String avgThisWeek = await pes.decryptValue(
+          userDoc.docs.first.get('avg_mood'));
+      String avgLastWeek = await pes.decryptValue(
+          userDoc.docs.first.get('avg_mood_last_week'));
 
       double dAvgThisWeek = double.parse(avgThisWeek);
       double dAvgLastWeek = double.parse(avgLastWeek);
 
-      // Fetch this week's entries for label distribution
       final entriesSnapshot = await FirebaseFirestore.instance
           .collection('notes')
           .where('uid', isEqualTo: uid)
           .get();
 
-      Map<String, List<String>> dayLabels = {};
+      Map<String, List<Map<String, String>>> dayLabels = {};
 
       for (var doc in entriesSnapshot.docs) {
         final data = doc.data();
         final entryDate = (data['entry_date'] as Timestamp).toDate();
 
         if (entryDate.isAfter(thisWeekStart)) {
-          final encryptedVector = List<String>.from(data['entry_classification']);
+          final encryptedVector = List<String>.from(
+              data['entry_classification']);
           final decryptedStrVector = await pes.decryptVector(encryptedVector);
-
-          // Convert string values to integers (assuming one-hot encoding)
-          final List<String> decodedVector = decryptedStrVector.map((e) => e ?? "0").toList();
+          final List<String> decodedVector = decryptedStrVector.map((e) =>
+          e ?? "0").toList();
           final decodedLabel = ClassificationEncoder.decode(decodedVector);
-
           final day = DateFormat.E().format(entryDate);
-          dayLabels.putIfAbsent(day, () => []).add(decodedLabel!);
+
+          final visibilityText = await checkEntryVisibility(doc.id, uid);
+
+          dayLabels.putIfAbsent(day, () => []).add({
+            "label": decodedLabel!,
+            "visibility": visibilityText
+          });
         }
       }
 
@@ -96,9 +102,48 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
         final labels = labelsPerDay[day] ?? [];
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Text("$day: ${labels.join(', ')}"),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: labels.map((item) {
+              final label = item['label']!;
+              final visibility = item['visibility']!;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("$day: $label"),
+                  if (visibility == "Entry is private")
+                    const Text("Private Entry",
+                        style: TextStyle(color: Colors.red))
+                  else
+                    GestureDetector(
+                      onTap: () => _showEntryDialog(context, visibility),
+                      child: const Text("Entry Visible", style: TextStyle(
+                          color: Colors.green,
+                          decoration: TextDecoration.underline)),
+                    ),
+                ],
+              );
+            }).toList(),
+          ),
         );
       }).toList(),
+    );
+  }
+
+  void _showEntryDialog(BuildContext context, String entryText) {
+    showDialog(
+      context: context,
+      builder: (_) =>
+          AlertDialog(
+            title: const Text("Entry Content"),
+            content: Text(entryText),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Close"),
+              ),
+            ],
+          ),
     );
   }
 
@@ -113,10 +158,13 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
             : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("📊 Average Mood This Week: ${avgMoodThisWeek.toStringAsFixed(2)}"),
-            Text("📉 Average Mood Last Week: ${avgMoodLastWeek.toStringAsFixed(2)}"),
+            Text(
+                "📊 Average Mood This Week: ${avgMoodThisWeek.toStringAsFixed(2)}"),
+            Text(
+                "📉 Average Mood Last Week: ${avgMoodLastWeek.toStringAsFixed(2)}"),
             const SizedBox(height: 20),
-            const Text("🏷️ Labels by Day of This Week:", style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text("🏷️ Labels by Day of This Week:",
+                style: TextStyle(fontWeight: FontWeight.bold)),
             _buildLabelList(),
           ],
         ),

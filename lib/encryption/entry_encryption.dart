@@ -67,4 +67,29 @@ class EncryptionService {
     }
   }
 
+  /// Decrypts a base64-encoded AES-GCM ciphertext using the stored secret key
+  /// This is the therapist trying to decrypt user entry under consensus
+  Future<String> decryptUserEntry(String base64Ciphertext, SecretKey secretKey) async {
+    try {
+      final secretBoxBytes = base64Decode(base64Ciphertext);
+
+      // Parse full secret box
+      final secretBox = SecretBox.fromConcatenation(
+        secretBoxBytes,
+        nonceLength: 12, // GCM uses 12-byte nonce
+        macLength: 16,   // GCM uses 16-byte tag
+      );
+
+      final clearBytes = await algorithm.decrypt(
+        secretBox,
+        secretKey: secretKey,
+      );
+
+      return utf8.decode(clearBytes);
+    } catch (e) {
+      print("Decryption error: $e");
+      return "Decryption failed";
+    }
+  }
+
 }

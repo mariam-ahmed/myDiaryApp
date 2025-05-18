@@ -8,26 +8,37 @@ Image bgImage(String imageName) {
   return Image.asset(imageName, fit: BoxFit.cover, width: double.infinity, height: 280);
 }
 
-Widget reusableTextField(String hintText, IconData icon, bool isPasswordType, TextEditingController controller) {
+Widget reusableTextField(
+    String hintText,
+    IconData icon,
+    bool isPasswordType,
+    TextEditingController controller, {
+      TextInputType keyboardType = TextInputType.text,
+      int? maxLength,
+    }) {
   return TextField(
     controller: controller,
     obscureText: isPasswordType,
-    cursorColor: Colors.black87, // Cursor color
-    style: TextStyle(color: Colors.black87), // Text color
+    cursorColor: Colors.black87,
+    keyboardType: keyboardType,
+    maxLength: maxLength,
+    style: const TextStyle(color: Colors.black87),
     decoration: InputDecoration(
       prefixIcon: Icon(icon, color: Colors.black54),
       hintText: hintText,
-      hintStyle: TextStyle(color: Colors.black38), // Hint text color
+      hintStyle: const TextStyle(color: Colors.black38),
       filled: true,
-      fillColor: Colors.white, // Background color of TextField
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide.none, // Remove the border line
+        borderSide: BorderSide.none,
       ),
-      contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      counterText: "", // Hides character counter for cleaner UI
     ),
   );
 }
+
 
 Container signInSignUpButton(BuildContext context, bool isLogin,
     Function onTap) {

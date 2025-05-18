@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:mobile_app/encryption/dp_noise.dart';
 import 'package:mobile_app/encryption/entry_encryption.dart';
 import 'package:mobile_app/encryption/phe_encryption.dart';
@@ -127,13 +128,15 @@ class _HomeScreenState extends State<HomeScreen> {
     DPNoise dp = DPNoise();
     double epsilon = 1.0;
     double noise = DPNoise.generateLaplaceNoise(1, epsilon);
-
-    String noisyTotalMoodEnc = await pes.addEncryptedvalues(totalMood.toString(), noise.toString());
+    BigInt wNoise = await DPNoise.wrapNoise(noise);
+    String encryptedNoise = await pes.encryptValue(wNoise.toString());
+    String noisyTotalMoodEnc = await pes.addEncryptedvalues(totalMood.toString(), encryptedNoise);
     String decryptedTotal = await pes.decryptValue(noisyTotalMoodEnc);
     double dNoisyTotal = double.tryParse(decryptedTotal) ?? 0;
+    double duwNoisyTotal = await DPNoise.unwrapNoise(dNoisyTotal);
 
     // 🔹 Final average mood with noise
-    double finalAvgMood = moodCount > 0 ? dNoisyTotal / moodCount : 0;
+    double finalAvgMood = moodCount > 0 ? duwNoisyTotal / moodCount : 0;
 
     // 🔹 Initialize mapping buckets
     Map<int, int> moodCounts = {5: 0, 10: 0, 15: 0, 20: 0, 25: 0};
