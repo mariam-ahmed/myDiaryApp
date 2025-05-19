@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  //await PHEEncryptionService().initializeKeys();
   //
   // // Firestore Emulator
   // FirebaseFirestore.instance.useFirestoreEmulator('10.0.2.2', 8080);

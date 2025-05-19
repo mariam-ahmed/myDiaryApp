@@ -133,9 +133,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void fetchAvgMood() async {
-    String? result = await getAvgMood(uid);
+    double? result = await getAvgMood(uid);
     setState(() {
-      avg_mood = result!;
+      avg_mood = result.toString()!;
     });
   }
 

@@ -1,8 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/encryption/entry_encryption.dart';
-
-import '../encryption/phe_encryption.dart';
 import 'firebase_methods.dart';
 import '../reusable_methods/firebase_methods.dart';
 import '../reusable_widgets/reusable_widget.dart';
@@ -27,24 +24,20 @@ Future<int> countFieldOccurrences(String id) async {
 }
 
 
-Future<String?> fetchAvgMood(String uid) async{
-  String? result = await getAvgMood(uid);
+Future<double?> fetchAvgMood(String uid) async{
+  double? result = await getAvgMood(uid);
   return result;
 }
 
-Future<String?> calculateNewAvgMood(String uid, double mood)
+Future<double> calculateNewAvgMood(String uid, double mood)
 async {
-  EncryptionService es = new EncryptionService();
-  PHEEncryptionService pes = PHEEncryptionService();
 
   int count = await countFieldOccurrences(uid);
-  String? sAvgMood = (await fetchAvgMood(uid));
-  double avgMood = double.parse(sAvgMood!);
-  double currentSum = avgMood*(count-1);
+  double? avgMood = (await fetchAvgMood(uid));
+  double currentSum = avgMood!*(count-1);
   currentSum += mood;
   double newAvg = currentSum/(count+1);
-  String eNewAvg = await pes.encryptValue(newAvg.toString());
-  return (eNewAvg);
+  return (newAvg);
 }
 
 void updateMood(String uid, double mood) async

@@ -1,8 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:mobile_app/encryption/dp_noise.dart';
-import 'package:mobile_app/encryption/entry_encryption.dart';
-import 'package:mobile_app/encryption/phe_encryption.dart';
 import 'package:mobile_app/utils/NavBar.dart';
 import 'package:mobile_app/screens/entry_editor.dart';
 import 'package:fl_chart/fl_chart.dart'; // Add this to pubspec.yaml
@@ -33,11 +32,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<double> currentWeek = List.filled(7, 0);
   List<double> lastWeek = List.filled(7, 0);
 
+  final task = TimelineTask();
+
   @override
   void initState() {
     super.initState();
     fetchName();
+    task.start('User: View Analytics');
+    print("Calculating task");
     loadAssignedUsers();
+    task.finish();
     checkAndResetWeeklyMood(uid);
   }
 
@@ -86,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> fetchName() async {
-    final result = await getName(widget.uid);
+    final result = await getName(uid);
     if (result != null) {
       setState(() {
         name = result;
@@ -95,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadAssignedUsers() async {
-    String? fetchedName = await getName(widget.uid);
+    String? fetchedName = await getTherapistName(uid);
     if (fetchedName != null) {
       List<Map<String, dynamic>> users =
           await fetchUsersForTherapist(fetchedName);
@@ -108,44 +112,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadAverageMood() async {
-    String totalMood = "";
+    double totalMood = 0;
     int moodCount = 0;
-    List<String> moods = [];
-    PHEEncryptionService pes = PHEEncryptionService();
+    List<double> moods = [];
+
 
     // 🔹 Aggregate encrypted mood values
     for (var user in assignedUsers) {
       String puid = user["uid"];
-      String? mood = await getDecryptedAvgMood(puid);
+      double? mood = await getAvgMood(puid);
       if (mood != null) {
-        totalMood = await pes.addEncryptedvalues(totalMood.toString(), mood.toString());
+        totalMood += mood;
         moodCount++;
         moods.add(mood); // still encrypted
       }
     }
 
-    // 🔹 Add noise to total and decrypt average mood
-    DPNoise dp = DPNoise();
-    double epsilon = 1.0;
-    double noise = DPNoise.generateLaplaceNoise(1, epsilon);
-    BigInt wNoise = await DPNoise.wrapNoise(noise);
-    String encryptedNoise = await pes.encryptValue(wNoise.toString());
-    String noisyTotalMoodEnc = await pes.addEncryptedvalues(totalMood.toString(), encryptedNoise);
-    String decryptedTotal = await pes.decryptValue(noisyTotalMoodEnc);
-    double dNoisyTotal = double.tryParse(decryptedTotal) ?? 0;
-    double duwNoisyTotal = await DPNoise.unwrapNoise(dNoisyTotal);
 
     // 🔹 Final average mood with noise
-    double finalAvgMood = moodCount > 0 ? duwNoisyTotal / moodCount : 0;
+    double finalAvgMood = totalMood;
 
     // 🔹 Initialize mapping buckets
     Map<int, int> moodCounts = {5: 0, 10: 0, 15: 0, 20: 0, 25: 0};
 
     // 🔹 Decrypt each mood value, add noise, and map to bucket
-    for (String encMood in moods) {
-      String noisyMoodEnc = await pes.addEncryptedvalues(encMood, noise.toString());
-      String decrypted = await pes.decryptValue(noisyMoodEnc);
-      double dMood = double.tryParse(decrypted) ?? 0;
+    for (double dMood in moods) {
 
       if (dMood <= 5) {
         moodCounts[5] = moodCounts[5]! + 1;

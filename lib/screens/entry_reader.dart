@@ -1,10 +1,8 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/utils/color_utils.dart';
-
-import '../encryption/classification_encoder.dart';
-import '../encryption/entry_encryption.dart';
-import '../encryption/phe_encryption.dart';
 
 class EntryReaderScreen extends StatefulWidget {
   final QueryDocumentSnapshot doc;
@@ -20,8 +18,8 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
   String intensity = '';
   String entry = '';
   String classification = '';
-  final EncryptionService encryptionService = EncryptionService();
-  final PHEEncryptionService pheencryptionService = PHEEncryptionService();
+
+  final task = TimelineTask();
 
   @override
   void initState() {
@@ -30,19 +28,17 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
   }
 
   void decryptValues() async {
+    task.start('Decrypting journal entry for user view');
+
     String moodDecrypted =
-        await pheencryptionService.decryptValue(widget.doc["entry_mood"]);
-    String intensityDecrypted = await pheencryptionService
-        .decryptValue(widget.doc["entry_mood_intensity"]);
+        widget.doc["entry_mood"].toString();
+    String intensityDecrypted = widget.doc["entry_mood_intensity"].toString();
     String entryDecrypted =
-        await encryptionService.decryptEntry(widget.doc["entry_content"]);
+        widget.doc["entry_content"].toString();
 
     // Decrypt classification vector (one-hot encoded)
-    List<String> encClass = List<String>.from(widget.doc["entry_classification"]);
-    List<String> decryptedVector = await pheencryptionService.decryptVector(encClass);
+    String label = widget.doc["entry_classification"];
 
-    // Find the classification label
-    String? label = await ClassificationEncoder.decode(decryptedVector);
 
     setState(() {
       mood = moodDecrypted;
@@ -50,6 +46,7 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
       entry = entryDecrypted;
       classification = label!;
     });
+    task.finish();
   }
 
   @override

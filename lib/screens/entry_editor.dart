@@ -5,11 +5,14 @@ import 'package:mobile_app/reusable_methods/mood_calculations.dart';
 import 'package:mobile_app/reusable_widgets/reusable_widget.dart';
 
 import '../reusable_methods/tensorFlow_methods.dart';
+import 'dart:developer';
+
 
 class EntryEditorScreen extends StatefulWidget {
   final String uid;
 
   EntryEditorScreen(this.uid, {super.key});
+
 
   @override
   State<EntryEditorScreen> createState() => _EntryEditorScreenState(uid);
@@ -25,6 +28,9 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
   late List<dynamic> classification;
   String firstClassification = '';
   bool therapistCanView = false;
+
+  final task = TimelineTask();
+
 
   _EntryEditorScreenState(this.uid);
 
@@ -140,9 +146,11 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {
+        onPressed: () {
+        task.start('Saving journal entry');
           addEntry(uid, _titleController.text, mood, intensity, therapistCanView,
-              _mainController.text, context)
+              _mainController.text, context);
+        task.finish();
         },
         child: const Icon(Icons.save),
         backgroundColor: Colors.teal.shade900,

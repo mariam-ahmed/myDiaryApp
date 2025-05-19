@@ -1,13 +1,11 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/encryption/classification_encoder.dart';
-import 'package:mobile_app/encryption/entry_encryption.dart';
 import 'package:mobile_app/reusable_methods/firebase_methods.dart';
 import 'package:mobile_app/screens/therapist/patient_analytics_screen.dart';
 import 'package:mobile_app/reusable_widgets/patient_card.dart';
 import 'package:fl_chart/fl_chart.dart';
-
-import '../../encryption/phe_encryption.dart';
 
 class PatientOverviewScreen extends StatefulWidget {
   final String uid;
@@ -24,13 +22,15 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
   String therapistName = "";
   double avgMood = 0;
   Map<String, String> todayLabelDistribution = {};
-  EncryptionService es = EncryptionService();
-  PHEEncryptionService pes = PHEEncryptionService();
+
+  final task = TimelineTask();
 
   @override
   void initState() {
     super.initState();
+    task.start('Therapist: View All Analytics');
     loadAssignedUsers();
+    task.finish();
   }
 
   Future<void> loadAssignedUsers() async {
@@ -53,12 +53,11 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
 
     for (var user in assignedUsers) {
       String puid = user["uid"];
-      String? mood = await getAvgMood(puid);
+      double? mood = await getAvgMood(puid);
       if (mood != null) {
-        double dmood = double.parse(mood);
-        totalMood += dmood;
+        totalMood += mood;
         moodCount++;
-        moods.add(dmood);
+        moods.add(mood);
       }
     }
 
@@ -84,8 +83,24 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
   }
 
   Future<void> loadTodayClassifications() async {
-    List<List<String>> encryptedVectors = [];
-    List<String> encodingOrder = await ClassificationEncoder.fetchLabelEncodingOrder();
+    // Define all 15 cognitive distortions as keys with 0 initial count
+    Map<String, int> labelCounts = {
+      "All-or-Nothing Thinking": 0,
+      "Overgeneralization": 0,
+      "Mental Filter": 0,
+      "Discounting the Positive": 0,
+      "Jumping to Conclusions": 0,
+      "Mind Reading": 0,
+      "Fortune Telling": 0,
+      "Magnification or Minimization": 0,
+      "Emotional Reasoning": 0,
+      "Should Statements": 0,
+      "Labeling": 0,
+      "Personalization": 0,
+      "Blaming": 0,
+      "Catastrophizing": 0,
+      "Control Fallacies": 0
+    };
 
     DateTime todayStart = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
     DateTime tomorrowStart = todayStart.add(const Duration(days: 1));
@@ -93,31 +108,26 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
     for (var user in assignedUsers) {
       String puid = user["uid"];
 
-      var encDoc = await FirebaseFirestore.instance
+      var snapshot = await FirebaseFirestore.instance
           .collection("notes")
           .where("uid", isEqualTo: puid)
           .where('entry_date', isGreaterThanOrEqualTo: todayStart)
           .where('entry_date', isLessThan: tomorrowStart)
           .get();
 
-      if (encDoc.docs.isNotEmpty != null) {
-        List<String> encrypted = List<String>.from(encDoc.docs.first.get("entry_classification"));
-        encryptedVectors.add(encrypted);
+      for (var doc in snapshot.docs) {
+        String classification = doc.get("entry_classification");
+        if (labelCounts.containsKey(classification)) {
+          labelCounts[classification] = labelCounts[classification]! + 1;
+        }
       }
     }
 
-    List<String> sumVector = await pes.addEncryptedVectors(encryptedVectors);
-    List<String> decryptedCounts = await pes.decryptVector(sumVector);
-
-    Map<String, String> labelCounts = {};
-    for (int i = 0; i < decryptedCounts.length; i++) {
-      labelCounts[encodingOrder[i]] = decryptedCounts[i];
-    }
-
     setState(() {
-      todayLabelDistribution = labelCounts;
+      todayLabelDistribution = labelCounts.map((key, value) => MapEntry(key, value.toString()));
     });
   }
+
 
   @override
   Widget build(BuildContext context) {

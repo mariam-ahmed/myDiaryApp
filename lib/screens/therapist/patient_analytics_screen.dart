@@ -1,9 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/encryption/entry_encryption.dart';
-import '../../encryption/classification_encoder.dart';
-import '../../encryption/phe_encryption.dart';
 import '../../reusable_methods/firebase_methods.dart';
 
 class PatientAnalyticsScreen extends StatefulWidget {
@@ -17,12 +16,12 @@ class PatientAnalyticsScreen extends StatefulWidget {
 class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
   String uid = "";
   bool isLoading = false;
-  EncryptionService es = new EncryptionService();
-  PHEEncryptionService pes = PHEEncryptionService();
 
   double avgMoodThisWeek = 0;
   double avgMoodLastWeek = 0;
   Map<String, List<Map<String, String>>> labelsPerDay = {};
+
+  final task = TimelineTask();
 
   _PatientAnalyticsScreenState(this.uid);
 
@@ -33,6 +32,8 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
   }
 
   Future<void> _loadAnalytics() async {
+
+    task.start('Therapist: View Analytics of user');
     setState(() => isLoading = true);
 
     final now = DateTime.now();
@@ -45,10 +46,10 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
           .where('uid', isEqualTo: uid)
           .get();
 
-      String avgThisWeek = await pes.decryptValue(
-          userDoc.docs.first.get('avg_mood'));
-      String avgLastWeek = await pes.decryptValue(
-          userDoc.docs.first.get('avg_mood_last_week'));
+      String avgThisWeek =
+          userDoc.docs.first.get('avg_mood').toString();
+      String avgLastWeek =
+          userDoc.docs.first.get('avg_mood_last_week').toString();
 
       double dAvgThisWeek = double.parse(avgThisWeek);
       double dAvgLastWeek = double.parse(avgLastWeek);
@@ -65,18 +66,14 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
         final entryDate = (data['entry_date'] as Timestamp).toDate();
 
         if (entryDate.isAfter(thisWeekStart)) {
-          final encryptedVector = List<String>.from(
-              data['entry_classification']);
-          final decryptedStrVector = await pes.decryptVector(encryptedVector);
-          final List<String> decodedVector = decryptedStrVector.map((e) =>
-          e ?? "0").toList();
-          final decodedLabel = ClassificationEncoder.decode(decodedVector);
+          final classification =
+              data['entry_classification'];
           final day = DateFormat.E().format(entryDate);
 
-          final visibilityText = await checkEntryVisibility(doc.id, uid);
+          final visibilityText = data['entry_content'];
 
           dayLabels.putIfAbsent(day, () => []).add({
-            "label": decodedLabel!,
+            "label": classification!,
             "visibility": visibilityText
           });
         }
@@ -92,6 +89,8 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
       print("Error loading analytics: $e");
       setState(() => isLoading = false);
     }
+
+    task.finish();
   }
 
   Widget _buildLabelList() {

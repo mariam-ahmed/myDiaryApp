@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/screens/therapist/therapist_home_screen.dart';
 
-import '../encryption/entry_encryption.dart';
 import '../reusable_methods/firebase_methods.dart';
 import '../reusable_widgets/reusable_widget.dart';
 
@@ -25,7 +24,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _lastNameTextController = TextEditingController();
   final TextEditingController _pinTextController = TextEditingController();
   String selectedRole = 'User'; // Default role
-  late EncryptionService encryptionService = EncryptionService();
   String? selectedTherapist;
   List<String> therapistList = [];
 
@@ -206,7 +204,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     }
                     ;
                     print("Created New Account");
-                    await encryptionService.generateAndStoreKey();
                   }).onError((error, stackTrace) {
                     print("Error ${error.toString()}");
                   });
