@@ -20,6 +20,15 @@ class PHEEncryptionService
     }
   }
 
+  void initKeys() async
+  {
+    try {
+      await platform.invokeMethod('initKeys');
+    } catch (e) {
+      print("Public Key Fetch Error: $e");
+    }
+  }
+
   // Encrypt classification tag
   Future<List<String>> encryptVector(List<String> oneHotVector) async {
     List<String> encryptedVector = [];

@@ -11,14 +11,19 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "phe_channel";
-    private PHEService pheService = new PHEService();
+    private PHEService pheService;
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
+        pheService = new PHEService(getApplicationContext());
         super.configureFlutterEngine(flutterEngine);
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
                 .setMethodCallHandler((call, result) -> {
                     switch (call.method) {
+                        case "initKeys":
+                            pheService.initKeys();
+                            result.success("Keys initialized");
+                            break;
                         case "encrypt":
                             String value = call.argument("value");
                             String ciphertext = pheService.encrypt(value);

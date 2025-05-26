@@ -26,23 +26,18 @@ Future<String?> getName(String uid) async {
   }
 }
 
-Future<String?> getTherapistUID(String name) async {
-  int spaceIndex = name.indexOf(' ');
-
-  String firstName = name.substring(0, spaceIndex);
-  String lastName = name.substring(spaceIndex + 1);
+Future<String?> getTherapistName(String uid) async {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   QuerySnapshot querySnapshot = await _firestore
       .collection("users")
-      .where("first_name", isEqualTo: firstName)
-      .where("last_name", isEqualTo: lastName)
+      .where("uid", isEqualTo: uid)
       .get();
   if (querySnapshot.docs.isNotEmpty) {
     DocumentSnapshot doc = querySnapshot.docs.first;
-    return (doc.get('uid')) as String?;
+    return (doc.get('therapist')) as String?;
   } else {
-    return 'No matching uid to therapist name found';
+    return 'No matching therapist to provided patient uid';
   }
 }
 

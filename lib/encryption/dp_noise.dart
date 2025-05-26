@@ -24,9 +24,9 @@ class DPNoise
   static Future<BigInt> fetchN() async
   {
     PHEEncryptionService pes = PHEEncryptionService();
-    return BigInt.parse(await pes.getPublicKey());
+    return BigInt.parse(await pes.getPublicKey(), radix: 16);
   }
-  static Future<BigInt> wrapNoise(double noise) async{
+  static Future<BigInt> wrapNoise(int noise) async{
     BigInt n = await fetchN();
     if (noise < 0) {
       return n + BigInt.from(noise); // e.g., -3 → n - 3

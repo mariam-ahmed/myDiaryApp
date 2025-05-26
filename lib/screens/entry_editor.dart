@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/reusable_methods/firebase_methods.dart';
@@ -25,6 +27,8 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
   late List<dynamic> classification;
   String firstClassification = '';
   bool therapistCanView = false;
+
+  final task = TimelineTask();
 
   _EntryEditorScreenState(this.uid);
 
@@ -140,9 +144,11 @@ class _EntryEditorScreenState extends State<EntryEditorScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {
+        onPressed: () {
+          task.start('Saving Entry');
           addEntry(uid, _titleController.text, mood, intensity, therapistCanView,
-              _mainController.text, context)
+              _mainController.text, context);
+          task.finish();
         },
         child: const Icon(Icons.save),
         backgroundColor: Colors.teal.shade900,

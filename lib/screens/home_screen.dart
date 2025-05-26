@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:mobile_app/encryption/dp_noise.dart';
@@ -32,6 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String name = "";
   List<double> currentWeek = List.filled(7, 0);
   List<double> lastWeek = List.filled(7, 0);
+
+  final task = TimelineTask();
 
   @override
   void initState() {
@@ -95,7 +99,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadAssignedUsers() async {
-    String? fetchedName = await getName(widget.uid);
+    task.start('User: View Analytics');
+    String? fetchedName = await getTherapistName(uid);
     if (fetchedName != null) {
       List<Map<String, dynamic>> users =
           await fetchUsersForTherapist(fetchedName);
@@ -105,20 +110,23 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       await loadAverageMood();
     }
+    task.finish();
   }
 
   Future<void> loadAverageMood() async {
-    String totalMood = "";
+    String totalMood = "0";
     int moodCount = 0;
     List<String> moods = [];
     PHEEncryptionService pes = PHEEncryptionService();
+
+    String eTotalMood = await pes.encryptValue(totalMood);
 
     // 🔹 Aggregate encrypted mood values
     for (var user in assignedUsers) {
       String puid = user["uid"];
       String? mood = await getDecryptedAvgMood(puid);
       if (mood != null) {
-        totalMood = await pes.addEncryptedvalues(totalMood.toString(), mood.toString());
+        eTotalMood = await pes.addEncryptedvalues(eTotalMood, mood);
         moodCount++;
         moods.add(mood); // still encrypted
       }
@@ -128,9 +136,10 @@ class _HomeScreenState extends State<HomeScreen> {
     DPNoise dp = DPNoise();
     double epsilon = 1.0;
     double noise = DPNoise.generateLaplaceNoise(1, epsilon);
-    BigInt wNoise = await DPNoise.wrapNoise(noise);
+    int scaledNoise = (noise * 1000).round();
+    BigInt wNoise = await DPNoise.wrapNoise(scaledNoise);
     String encryptedNoise = await pes.encryptValue(wNoise.toString());
-    String noisyTotalMoodEnc = await pes.addEncryptedvalues(totalMood.toString(), encryptedNoise);
+    String noisyTotalMoodEnc = await pes.addEncryptedvalues(totalMood, encryptedNoise);
     String decryptedTotal = await pes.decryptValue(noisyTotalMoodEnc);
     double dNoisyTotal = double.tryParse(decryptedTotal) ?? 0;
     double duwNoisyTotal = await DPNoise.unwrapNoise(dNoisyTotal);

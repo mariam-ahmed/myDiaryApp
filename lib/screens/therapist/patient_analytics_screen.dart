@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -24,6 +26,8 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
   double avgMoodLastWeek = 0;
   Map<String, List<Map<String, String>>> labelsPerDay = {};
 
+  final task = TimelineTask();
+
   _PatientAnalyticsScreenState(this.uid);
 
   @override
@@ -33,6 +37,9 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
   }
 
   Future<void> _loadAnalytics() async {
+
+    task.start('Therapist: View All');
+
     setState(() => isLoading = true);
 
     final now = DateTime.now();
@@ -92,6 +99,8 @@ class _PatientAnalyticsScreenState extends State<PatientAnalyticsScreen> {
       print("Error loading analytics: $e");
       setState(() => isLoading = false);
     }
+
+    task.finish();
   }
 
   Widget _buildLabelList() {

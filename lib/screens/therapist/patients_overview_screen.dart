@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/encryption/classification_encoder.dart';
@@ -27,6 +29,8 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
   EncryptionService es = EncryptionService();
   PHEEncryptionService pes = PHEEncryptionService();
 
+  final task = TimelineTask();
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +38,9 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
   }
 
   Future<void> loadAssignedUsers() async {
+
+    task.start('Therapist: View User');
+
     String? fetchedName = await getName(widget.uid);
     if (fetchedName != null) {
       List<Map<String, dynamic>> users = await fetchUsersForTherapist(fetchedName);
@@ -44,6 +51,8 @@ class _PatientOverviewScreenState extends State<PatientOverviewScreen> {
       await loadAverageMood();
       await loadTodayClassifications();
     }
+
+    task.finish();
   }
 
   Future<void> loadAverageMood() async {

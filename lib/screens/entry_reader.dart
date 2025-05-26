@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/utils/color_utils.dart';
@@ -23,6 +25,8 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
   final EncryptionService encryptionService = EncryptionService();
   final PHEEncryptionService pheencryptionService = PHEEncryptionService();
 
+  final task = TimelineTask();
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +34,9 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
   }
 
   void decryptValues() async {
+
+    task.start('Decrypting Entry');
+
     String moodDecrypted =
         await pheencryptionService.decryptValue(widget.doc["entry_mood"]);
     String intensityDecrypted = await pheencryptionService
@@ -50,6 +57,8 @@ class _EntryReaderScreenState extends State<EntryReaderScreen> {
       entry = entryDecrypted;
       classification = label!;
     });
+
+    task.finish();
   }
 
   @override
