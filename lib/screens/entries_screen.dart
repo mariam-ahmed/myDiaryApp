@@ -20,6 +20,23 @@ class _EntriesScreenState extends State<EntriesScreen> {
   _EntriesScreenState(this.uid);
 
   @override
+  void initState() {
+    // TODO: implement initState
+    getMood();
+  }
+
+  void getMood() async
+  {
+    double mood = (await FirebaseFirestore.instance
+        .collection("notes")
+        .where("uid", isEqualTo: uid)
+        .limit(1)
+        .get())
+        .docs
+        .first["entry_mood"];
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       // Use a light background color that matches the rest of your app

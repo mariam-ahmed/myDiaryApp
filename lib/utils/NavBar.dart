@@ -5,7 +5,6 @@ import 'package:mobile_app/screens/entries_screen.dart';
 import 'package:mobile_app/screens/profile_screen.dart';
 import 'package:mobile_app/screens/settings_screen.dart';
 import 'package:mobile_app/screens/signin_screen.dart';
-import 'package:mobile_app/screens/verify_pin_screen.dart';
 import 'package:mobile_app/utils/color_utils.dart';
 
 class NavBar extends StatelessWidget {
@@ -36,7 +35,7 @@ class NavBar extends StatelessWidget {
               print("Entries");
               FirebaseAuth.instance.signOut().then((value) {
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => PinVerificationScreen(uid)));
+                    MaterialPageRoute(builder: (context) => EntriesScreen(uid)));
               });
             },
           ),
