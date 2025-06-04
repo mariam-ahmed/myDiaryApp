@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   //await PHEEncryptionService().initializeKeys();
   //
   // // Firestore Emulator
@@ -15,6 +15,11 @@ void main() async {
   //
   // // Firebase Auth Emulator
   // FirebaseAuth.instance.useAuthEmulator('10.0.2.2', 9099);
+  await Firebase.initializeApp();
+
+  // For Android Emulator (10.0.2.2 = localhost)
+  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8081);
+  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
 
   runApp(const MyApp());
 }
