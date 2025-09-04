@@ -163,7 +163,7 @@ Future<bool> addEntry(String uid, String title, double mood, double intensity,
   //Encrypt Entry
   SecretKey? key = await es.getStoredKey();
   var keyBytes = await key?.extractBytes();
-  String prevHash = await computeHash(uid);
+  String prevHash = await computeHash(uid, entry, mood, date2);
   final encryptedEntry = await es.encryptEntry(entry, key!);
 
   //Encrypt Classification

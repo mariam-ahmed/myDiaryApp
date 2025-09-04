@@ -29,7 +29,7 @@ void main() {
       double noise;
       // Generate noise samples
       for (int i = 0; i < 100; i++) {
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         results1.add(avgMood + noise);
       }
 
@@ -47,7 +47,7 @@ void main() {
       double noise;
       // Generate noise samples
       for (int i = 0; i < 1000; i++) {
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         results2.add(avgMood + noise);
       }
 
@@ -65,7 +65,7 @@ void main() {
       double noise;
       // Generate noise samples
       for (int i = 0; i < 10000; i++) {
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         results3.add(avgMood + noise);
       }
 
@@ -89,11 +89,11 @@ void main() {
       const double trueGroupB = (u1 + u2 + u3)/3.0;   // 15 + 10 + 8 = 33
 
       for (int i = 0; i < 100; i++) {
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         final responseA = trueGroupA+noise;
         groupAResults.add(responseA);
 
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         final responseB = trueGroupB + noise;
         groupBResults.add(responseB);
       }
@@ -122,11 +122,11 @@ void main() {
       const double trueGroupB = (u1 + u2 + u3)/3.0;   // 15 + 10 + 8 = 33
 
       for (int i = 0; i < 1000; i++) {
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         final responseA = trueGroupA+noise;
         groupAResults.add(responseA);
 
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         final responseB = trueGroupB + noise;
         groupBResults.add(responseB);
       }
@@ -155,11 +155,11 @@ void main() {
       const double trueGroupB = (u1 + u2 + u3)/3.0;   // 15 + 10 + 8 = 33
 
       for (int i = 0; i < 10000; i++) {
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         final responseA = trueGroupA+noise;
         groupAResults.add(responseA);
 
-        noise = DPNoise.generateLaplaceNoise(1, 0.5);
+        noise = DPNoise.generateLaplaceNoise(1, 1);
         final responseB = trueGroupB + noise;
         groupBResults.add(responseB);
       }

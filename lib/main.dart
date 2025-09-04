@@ -12,6 +12,7 @@ void main() async {
 
   PHEEncryptionService es = PHEEncryptionService();
   es.initKeys();
+  //print("The public key is: "+  await es.getPublicKey());
   //
   // // Firestore Emulator
   // FirebaseFirestore.instance.useFirestoreEmulator('10.0.2.2', 8080);
